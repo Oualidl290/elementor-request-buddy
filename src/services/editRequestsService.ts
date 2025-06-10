@@ -115,10 +115,10 @@ export const editRequestsService = {
 
   // PATCH /edit-requests/:id - Update request (designer-side)
   async updateEditRequest(id: string, updates: UpdateEditRequestData) {
-    // Convert Reply[] to Json for database storage
-    const dbUpdates = {
+    // Convert Reply[] to Json for database storage - cast to any to satisfy TypeScript
+    const dbUpdates: any = {
       ...updates,
-      replies: updates.replies ? updates.replies : undefined,
+      replies: updates.replies ? JSON.parse(JSON.stringify(updates.replies)) : undefined,
     };
 
     const { data, error } = await supabase
