@@ -15,6 +15,7 @@ export type Database = {
           id: string
           message: string
           page_url: string
+          project_id: string
           replies: Json | null
           section_id: string | null
           status: string
@@ -26,6 +27,7 @@ export type Database = {
           id?: string
           message: string
           page_url: string
+          project_id?: string
           replies?: Json | null
           section_id?: string | null
           status?: string
@@ -37,10 +39,35 @@ export type Database = {
           id?: string
           message?: string
           page_url?: string
+          project_id?: string
           replies?: Json | null
           section_id?: string | null
           status?: string
           submitted_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          project_id: string
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          role?: string
           updated_at?: string
         }
         Relationships: []

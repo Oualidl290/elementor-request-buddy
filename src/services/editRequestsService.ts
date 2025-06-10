@@ -4,13 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 export interface EditRequest {
   id: string;
   page_url: string;
-  section_id?: string;
+  section_id?: string | null;
   message: string;
   status: 'open' | 'in-progress' | 'resolved';
+  project_id: string;
   replies: Reply[];
   created_at: string;
   updated_at: string;
-  submitted_by?: string;
+  submitted_by?: string | null;
 }
 
 export interface Reply {
@@ -22,9 +23,10 @@ export interface Reply {
 
 export interface CreateEditRequestData {
   page_url: string;
-  section_id?: string;
+  section_id?: string | null;
   message: string;
-  submitted_by?: string;
+  project_id?: string;
+  submitted_by?: string | null;
 }
 
 export interface UpdateEditRequestData {
@@ -40,6 +42,7 @@ const transformToEditRequest = (row: any): EditRequest => {
     section_id: row.section_id,
     message: row.message,
     status: row.status,
+    project_id: row.project_id,
     replies: Array.isArray(row.replies) ? row.replies : [],
     created_at: row.created_at,
     updated_at: row.updated_at,
@@ -53,6 +56,7 @@ export const editRequestsService = {
     page_url?: string;
     status?: string;
     search?: string;
+    project_id?: string;
   }) {
     let query = supabase
       .from('edit_requests')
@@ -65,6 +69,10 @@ export const editRequestsService = {
 
     if (filters?.status && filters.status !== 'all') {
       query = query.eq('status', filters.status);
+    }
+
+    if (filters?.project_id) {
+      query = query.eq('project_id', filters.project_id);
     }
 
     if (filters?.search) {
@@ -99,9 +107,15 @@ export const editRequestsService = {
 
   // POST /edit-requests - Create new request (client-side)
   async createEditRequest(requestData: CreateEditRequestData) {
+    // Ensure project_id is set, default to empty string to match database default
+    const dataToInsert = {
+      ...requestData,
+      project_id: requestData.project_id || '',
+    };
+
     const { data, error } = await supabase
       .from('edit_requests')
-      .insert([requestData])
+      .insert([dataToInsert])
       .select()
       .single();
 
