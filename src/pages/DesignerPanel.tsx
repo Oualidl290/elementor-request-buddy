@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, MessageSquare, Clock, CheckCircle, AlertCircle, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,108 +7,136 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface EditRequest {
-  id: string;
-  sectionName: string;
-  pageUrl: string;
-  clientMessage: string;
-  attachedFiles: string[];
-  timestamp: string;
-  status: 'Open' | 'In Progress' | 'Resolved';
-}
-
-const mockRequests: EditRequest[] = [
-  {
-    id: '1',
-    sectionName: 'Hero Section',
-    pageUrl: '/homepage',
-    clientMessage: 'Please change the main headline to "Transform Your Business Today" and make the button more prominent.',
-    attachedFiles: ['reference-image.jpg'],
-    timestamp: '2 hours ago',
-    status: 'Open'
-  },
-  {
-    id: '2',
-    sectionName: 'About Us',
-    pageUrl: '/about',
-    clientMessage: 'The team photo needs to be updated with our new team member Sarah.',
-    attachedFiles: ['new-team-photo.jpg', 'sarah-headshot.jpg'],
-    timestamp: '1 day ago',
-    status: 'In Progress'
-  },
-  {
-    id: '3',
-    sectionName: 'Contact Form',
-    pageUrl: '/contact',
-    clientMessage: 'Add a phone number field to the contact form please.',
-    attachedFiles: [],
-    timestamp: '3 days ago',
-    status: 'Resolved'
-  },
-  {
-    id: '4',
-    sectionName: 'Services Grid',
-    pageUrl: '/services',
-    clientMessage: 'Update the pricing for our premium package to $299/month.',
-    attachedFiles: [],
-    timestamp: '1 week ago',
-    status: 'Open'
-  }
-];
+import { useToast } from '@/hooks/use-toast';
+import { editRequestsService, EditRequest } from '@/services/editRequestsService';
 
 const DesignerPanel = () => {
-  const [requests, setRequests] = useState<EditRequest[]>(mockRequests);
+  const [requests, setRequests] = useState<EditRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [pageFilter, setPageFilter] = useState<string>('all');
   const [activeReply, setActiveReply] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const { toast } = useToast();
 
-  const filteredRequests = requests.filter(request => {
-    const matchesSearch = request.clientMessage.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.sectionName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
-    const matchesPage = pageFilter === 'all' || request.pageUrl === pageFilter;
-    
-    return matchesSearch && matchesStatus && matchesPage;
-  });
+  // Load requests from Supabase
+  const loadRequests = async () => {
+    try {
+      setLoading(true);
+      const data = await editRequestsService.getEditRequests({
+        page_url: pageFilter !== 'all' ? pageFilter : undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        search: searchTerm || undefined
+      });
+      setRequests(data);
+    } catch (error) {
+      console.error('Error loading requests:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load edit requests. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const pendingCount = requests.filter(r => r.status !== 'Resolved').length;
-  const uniquePages = [...new Set(requests.map(r => r.pageUrl))];
+  // Load requests on component mount and when filters change
+  useEffect(() => {
+    loadRequests();
+  }, [statusFilter, pageFilter]);
+
+  // Handle search with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadRequests();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const filteredRequests = requests;
+  const pendingCount = requests.filter(r => r.status !== 'resolved').length;
+  const uniquePages = [...new Set(requests.map(r => r.page_url))];
 
   const getStatusBadge = (status: string) => {
     const colors = {
-      'Open': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'In Progress': 'bg-blue-100 text-blue-800 border-blue-200',
-      'Resolved': 'bg-green-100 text-green-800 border-green-200'
+      'open': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'in-progress': 'bg-blue-100 text-blue-800 border-blue-200',
+      'resolved': 'bg-green-100 text-green-800 border-green-200'
     };
-    return colors[status as keyof typeof colors] || colors['Open'];
+    return colors[status as keyof typeof colors] || colors['open'];
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Open': return <AlertCircle className="w-3 h-3" />;
-      case 'In Progress': return <Clock className="w-3 h-3" />;
-      case 'Resolved': return <CheckCircle className="w-3 h-3" />;
+      case 'open': return <AlertCircle className="w-3 h-3" />;
+      case 'in-progress': return <Clock className="w-3 h-3" />;
+      case 'resolved': return <CheckCircle className="w-3 h-3" />;
       default: return <AlertCircle className="w-3 h-3" />;
     }
   };
 
-  const updateRequestStatus = (id: string, newStatus: 'Open' | 'In Progress' | 'Resolved') => {
-    setRequests(prev => prev.map(req => 
-      req.id === id ? { ...req, status: newStatus } : req
-    ));
-  };
-
-  const handleReply = (id: string) => {
-    if (replyText.trim()) {
-      // In a real app, this would send the reply
-      console.log(`Reply to request ${id}:`, replyText);
-      setActiveReply(null);
-      setReplyText('');
+  const updateRequestStatus = async (id: string, newStatus: 'open' | 'in-progress' | 'resolved') => {
+    try {
+      await editRequestsService.updateEditRequest(id, { status: newStatus });
+      await loadRequests(); // Refresh the list
+      toast({
+        title: "Status Updated",
+        description: `Request status changed to ${newStatus.replace('-', ' ')}.`
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update status. Please try again.",
+        variant: "destructive"
+      });
     }
   };
+
+  const handleReply = async (id: string) => {
+    if (replyText.trim()) {
+      try {
+        await editRequestsService.addReply(id, replyText.trim());
+        await loadRequests(); // Refresh the list
+        setActiveReply(null);
+        setReplyText('');
+        toast({
+          title: "Reply Sent",
+          description: "Your reply has been added to the request."
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to send reply. Please try again.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    if (diffInHours < 24 * 7) return `${Math.floor(diffInHours / 24)} day${Math.floor(diffInHours / 24) > 1 ? 's' : ''} ago`;
+    return `${Math.floor(diffInHours / (24 * 7))} week${Math.floor(diffInHours / (24 * 7)) > 1 ? 's' : ''} ago`;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading edit requests...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -153,9 +181,9 @@ const DesignerPanel = () => {
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-200 shadow-lg">
                       <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="Open">Open</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="Resolved">Resolved</SelectItem>
+                      <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="in-progress">In Progress</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -188,35 +216,44 @@ const DesignerPanel = () => {
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-gray-900">{request.sectionName}</h3>
+                          <h3 className="font-semibold text-gray-900">
+                            {request.section_id || 'General Request'}
+                          </h3>
                           <Badge 
                             variant="outline" 
                             className={`flex items-center gap-1 ${getStatusBadge(request.status)}`}
                           >
                             {getStatusIcon(request.status)}
-                            {request.status}
+                            {request.status.replace('-', ' ')}
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-600 mb-1">
-                          <span className="font-medium">Page:</span> {request.pageUrl}
+                          <span className="font-medium">Page:</span> {request.page_url}
                         </p>
-                        <p className="text-sm text-gray-500">{request.timestamp}</p>
+                        <p className="text-sm text-gray-500">{formatTimestamp(request.created_at)}</p>
+                        {request.submitted_by && (
+                          <p className="text-sm text-gray-500">
+                            <span className="font-medium">From:</span> {request.submitted_by}
+                          </p>
+                        )}
                       </div>
                     </div>
 
                     <div className="mb-4">
-                      <p className="text-gray-800 leading-relaxed">{request.clientMessage}</p>
+                      <p className="text-gray-800 leading-relaxed">{request.message}</p>
                     </div>
 
-                    {/* Attached Files */}
-                    {request.attachedFiles.length > 0 && (
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Attached Files:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {request.attachedFiles.map((file, index) => (
-                            <div key={index} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
-                              <FileText className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm text-gray-600">{file}</span>
+                    {/* Replies */}
+                    {request.replies && request.replies.length > 0 && (
+                      <div className="mb-4 border-l-2 border-gray-200 pl-4">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Replies:</p>
+                        <div className="space-y-2">
+                          {request.replies.map((reply) => (
+                            <div key={reply.id} className="bg-gray-50 p-3 rounded-lg">
+                              <p className="text-sm text-gray-800">{reply.message}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {reply.from} • {formatTimestamp(reply.timestamp)}
+                              </p>
                             </div>
                           ))}
                         </div>
@@ -233,9 +270,9 @@ const DesignerPanel = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                          <SelectItem value="Open">Open</SelectItem>
-                          <SelectItem value="In Progress">In Progress</SelectItem>
-                          <SelectItem value="Resolved">Resolved</SelectItem>
+                          <SelectItem value="open">Open</SelectItem>
+                          <SelectItem value="in-progress">In Progress</SelectItem>
+                          <SelectItem value="resolved">Resolved</SelectItem>
                         </SelectContent>
                       </Select>
                       
