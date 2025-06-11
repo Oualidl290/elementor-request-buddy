@@ -25,7 +25,7 @@ export interface CreateEditRequestData {
   page_url: string;
   section_id?: string | null;
   message: string;
-  project_id?: string;
+  project_id: string; // Now required
   submitted_by?: string | null;
 }
 
@@ -63,16 +63,17 @@ export const editRequestsService = {
       .select('*')
       .order('created_at', { ascending: false });
 
+    // Always filter by project_id if provided (this is critical for multi-tenant isolation)
+    if (filters?.project_id) {
+      query = query.eq('project_id', filters.project_id);
+    }
+
     if (filters?.page_url && filters.page_url !== 'all') {
       query = query.eq('page_url', filters.page_url);
     }
 
     if (filters?.status && filters.status !== 'all') {
       query = query.eq('status', filters.status);
-    }
-
-    if (filters?.project_id) {
-      query = query.eq('project_id', filters.project_id);
     }
 
     if (filters?.search) {
@@ -107,15 +108,14 @@ export const editRequestsService = {
 
   // POST /edit-requests - Create new request (client-side)
   async createEditRequest(requestData: CreateEditRequestData) {
-    // Ensure project_id is set, default to empty string to match database default
-    const dataToInsert = {
-      ...requestData,
-      project_id: requestData.project_id || '',
-    };
+    // Validate that project_id is provided
+    if (!requestData.project_id) {
+      throw new Error('Project ID is required');
+    }
 
     const { data, error } = await supabase
       .from('edit_requests')
-      .insert([dataToInsert])
+      .insert([requestData])
       .select()
       .single();
 
@@ -129,11 +129,15 @@ export const editRequestsService = {
 
   // PATCH /edit-requests/:id - Update request (designer-side)
   async updateEditRequest(id: string, updates: UpdateEditRequestData) {
-    // Convert Reply[] to Json for database storage - cast to any to satisfy TypeScript
+    // Ensure replies are properly serialized as JSON
     const dbUpdates: any = {
       ...updates,
-      replies: updates.replies ? JSON.parse(JSON.stringify(updates.replies)) : undefined,
     };
+
+    // If replies are being updated, ensure they're serialized properly
+    if (updates.replies) {
+      dbUpdates.replies = JSON.parse(JSON.stringify(updates.replies));
+    }
 
     const { data, error } = await supabase
       .from('edit_requests')

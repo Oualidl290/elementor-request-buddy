@@ -13,13 +13,18 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [projectId, setProjectId] = useState('');
+  const [existingProjectId, setExistingProjectId] = useState('');
   const [role, setRole] = useState('user');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const navigate = useNavigate();
+
+  // Generate a unique project ID for new designers
+  const generateProjectId = () => {
+    return 'proj_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+  };
 
   useEffect(() => {
     // Set up auth state listener
@@ -57,6 +62,19 @@ const Auth = () => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
+      // Generate project_id for designers, use existing for users/admins
+      let projectId = '';
+      if (role === 'designer') {
+        projectId = generateProjectId();
+      } else {
+        projectId = existingProjectId;
+        if (!projectId) {
+          setError('Project ID is required for users and admins');
+          setLoading(false);
+          return;
+        }
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -72,7 +90,11 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
-        setError('Please check your email for a confirmation link.');
+        if (role === 'designer') {
+          setError(`Your project ID is: ${projectId}. Please save this! Check your email for a confirmation link.`);
+        } else {
+          setError('Please check your email for a confirmation link.');
+        }
       }
     } catch (error: any) {
       console.error('Sign up error:', error);
@@ -154,28 +176,16 @@ const Auth = () => {
 
             {!isLogin && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="projectId">Project ID</Label>
-                  <Input
-                    id="projectId"
-                    type="text"
-                    value={projectId}
-                    onChange={(e) => setProjectId(e.target.value)}
-                    required
-                    placeholder="Enter your project ID"
-                  />
-                </div>
-
                 <div className="space-y-3">
                   <Label>Role</Label>
                   <RadioGroup value={role} onValueChange={setRole}>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="user" id="user" />
-                      <Label htmlFor="user">User</Label>
+                      <Label htmlFor="user">User (Client)</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="designer" id="designer" />
-                      <Label htmlFor="designer">Designer</Label>
+                      <Label htmlFor="designer">Designer (New Project)</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="admin" id="admin" />
@@ -183,11 +193,41 @@ const Auth = () => {
                     </div>
                   </RadioGroup>
                 </div>
+
+                {role !== 'designer' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="existingProjectId">Project ID</Label>
+                    <Input
+                      id="existingProjectId"
+                      type="text"
+                      value={existingProjectId}
+                      onChange={(e) => setExistingProjectId(e.target.value)}
+                      required
+                      placeholder="Enter the project ID provided by your designer"
+                    />
+                    <p className="text-xs text-gray-600">
+                      Get this ID from your designer
+                    </p>
+                  </div>
+                )}
+
+                {role === 'designer' && (
+                  <div className="p-3 bg-blue-50 rounded-md">
+                    <p className="text-sm text-blue-800">
+                      <strong>New Designer:</strong> A unique project ID will be generated for you. 
+                      Share this ID with your clients so they can submit feedback.
+                    </p>
+                  </div>
+                )}
               </>
             )}
 
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+              <div className={`text-sm p-3 rounded-md ${
+                error.includes('project ID is:') || error.includes('Check your email') 
+                  ? 'text-green-600 bg-green-50' 
+                  : 'text-red-600 bg-red-50'
+              }`}>
                 {error}
               </div>
             )}
@@ -203,6 +243,7 @@ const Auth = () => {
               onClick={() => {
                 setIsLogin(!isLogin);
                 setError('');
+                setExistingProjectId('');
               }}
               className="text-sm text-blue-600 hover:underline"
             >
