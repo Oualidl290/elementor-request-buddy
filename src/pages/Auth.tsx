@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useNavigate } from 'react-router-dom';
 import { User, Session } from '@supabase/supabase-js';
+import { Sparkles, Users, Globe } from 'lucide-react';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -62,14 +63,14 @@ const Auth = () => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
-      // Generate project_id for designers, use existing for users/admins
+      // Generate project_id for designers, use existing for users
       let projectId = '';
       if (role === 'designer') {
         projectId = generateProjectId();
       } else {
         projectId = existingProjectId;
         if (!projectId) {
-          setError('Project ID is required for users and admins');
+          setError('Project ID is required for users');
           setLoading(false);
           return;
         }
@@ -91,9 +92,9 @@ const Auth = () => {
 
       if (data.user) {
         if (role === 'designer') {
-          setError(`Your project ID is: ${projectId}. Please save this! Check your email for a confirmation link.`);
+          setError(`🎉 Welcome! Your project ID is: ${projectId}. Please save this! Check your email for a confirmation link.`);
         } else {
-          setError('Please check your email for a confirmation link.');
+          setError('✅ Please check your email for a confirmation link.');
         }
       }
     } catch (error: any) {
@@ -136,122 +137,167 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>{isLogin ? 'Sign In' : 'Sign Up'}</CardTitle>
-          <CardDescription>
-            {isLogin 
-              ? 'Enter your credentials to access the designer panel' 
-              : 'Create an account to get started'
-            }
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={isLogin ? handleSignIn : handleSignUp} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="Enter your email"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="Enter your password"
-                minLength={6}
-              />
-            </div>
-
-            {!isLogin && (
-              <>
-                <div className="space-y-3">
-                  <Label>Role</Label>
-                  <RadioGroup value={role} onValueChange={setRole}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="user" id="user" />
-                      <Label htmlFor="user">User (Client)</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="designer" id="designer" />
-                      <Label htmlFor="designer">Designer (New Project)</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="admin" id="admin" />
-                      <Label htmlFor="admin">Admin</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {role !== 'designer' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="existingProjectId">Project ID</Label>
-                    <Input
-                      id="existingProjectId"
-                      type="text"
-                      value={existingProjectId}
-                      onChange={(e) => setExistingProjectId(e.target.value)}
-                      required
-                      placeholder="Enter the project ID provided by your designer"
-                    />
-                    <p className="text-xs text-gray-600">
-                      Get this ID from your designer
-                    </p>
-                  </div>
-                )}
-
-                {role === 'designer' && (
-                  <div className="p-3 bg-blue-50 rounded-md">
-                    <p className="text-sm text-blue-800">
-                      <strong>New Designer:</strong> A unique project ID will be generated for you. 
-                      Share this ID with your clients so they can submit feedback.
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
-
-            {error && (
-              <div className={`text-sm p-3 rounded-md ${
-                error.includes('project ID is:') || error.includes('Check your email') 
-                  ? 'text-green-600 bg-green-50' 
-                  : 'text-red-600 bg-red-50'
-              }`}>
-                {error}
-              </div>
-            )}
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Sign Up')}
-            </Button>
-          </form>
-
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError('');
-                setExistingProjectId('');
-              }}
-              className="text-sm text-blue-600 hover:underline"
-            >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl mb-4">
+            <Sparkles className="w-8 h-8 text-white" />
           </div>
-        </CardContent>
-      </Card>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {isLogin ? 'Welcome back' : 'Get started'}
+          </h1>
+          <p className="text-gray-600">
+            {isLogin 
+              ? 'Sign in to your account to continue' 
+              : 'Create your account and start collaborating'
+            }
+          </p>
+        </div>
+
+        <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+          <CardContent className="p-8">
+            <form onSubmit={isLogin ? handleSignIn : handleSignUp} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="Enter your email"
+                  className="h-12 border-gray-200 focus:border-violet-500 focus:ring-violet-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="Enter your password"
+                  minLength={6}
+                  className="h-12 border-gray-200 focus:border-violet-500 focus:ring-violet-500"
+                />
+              </div>
+
+              {!isLogin && (
+                <>
+                  <div className="space-y-4">
+                    <Label className="text-sm font-medium text-gray-700">I am a</Label>
+                    <RadioGroup value={role} onValueChange={setRole} className="space-y-3">
+                      <div className="flex items-center space-x-3 p-4 rounded-xl border-2 border-gray-100 hover:border-violet-200 transition-colors">
+                        <RadioGroupItem value="user" id="user" className="text-violet-600" />
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <Users className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <Label htmlFor="user" className="font-medium text-gray-900">Client</Label>
+                            <p className="text-sm text-gray-500">Join an existing project</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3 p-4 rounded-xl border-2 border-gray-100 hover:border-violet-200 transition-colors">
+                        <RadioGroupItem value="designer" id="designer" className="text-violet-600" />
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-violet-100 rounded-lg">
+                            <Globe className="w-4 h-4 text-violet-600" />
+                          </div>
+                          <div>
+                            <Label htmlFor="designer" className="font-medium text-gray-900">Designer</Label>
+                            <p className="text-sm text-gray-500">Create a new project</p>
+                          </div>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {role !== 'designer' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="existingProjectId" className="text-sm font-medium text-gray-700">Project ID</Label>
+                      <Input
+                        id="existingProjectId"
+                        type="text"
+                        value={existingProjectId}
+                        onChange={(e) => setExistingProjectId(e.target.value)}
+                        required
+                        placeholder="Enter the project ID from your designer"
+                        className="h-12 border-gray-200 focus:border-violet-500 focus:ring-violet-500"
+                      />
+                      <p className="text-xs text-gray-500 flex items-center space-x-1">
+                        <Globe className="w-3 h-3" />
+                        <span>Get this ID from your designer</span>
+                      </p>
+                    </div>
+                  )}
+
+                  {role === 'designer' && (
+                    <div className="p-4 bg-gradient-to-r from-violet-50 to-indigo-50 rounded-xl border border-violet-100">
+                      <div className="flex items-start space-x-3">
+                        <div className="p-1 bg-violet-100 rounded-lg">
+                          <Sparkles className="w-4 h-4 text-violet-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-violet-900">
+                            Creating a new project
+                          </p>
+                          <p className="text-xs text-violet-700 mt-1">
+                            A unique project ID will be generated for you. Share this ID with your clients so they can submit feedback.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {error && (
+                <div className={`text-sm p-4 rounded-xl ${
+                  error.includes('project ID is:') || error.includes('Check your email') || error.includes('🎉') || error.includes('✅')
+                    ? 'text-green-700 bg-green-50 border border-green-100' 
+                    : 'text-red-700 bg-red-50 border border-red-100'
+                }`}>
+                  {error}
+                </div>
+              )}
+
+              <Button 
+                type="submit" 
+                className="w-full h-12 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200" 
+                disabled={loading}
+              >
+                {loading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span>Please wait...</span>
+                  </div>
+                ) : (
+                  isLogin ? 'Sign In' : 'Create Account'
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError('');
+                  setExistingProjectId('');
+                }}
+                className="text-sm text-violet-600 hover:text-violet-700 font-medium hover:underline transition-colors"
+              >
+                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
