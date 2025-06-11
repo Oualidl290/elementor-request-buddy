@@ -4,18 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { User, Session } from '@supabase/supabase-js';
-import { Sparkles, Users, Globe } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [existingProjectId, setExistingProjectId] = useState('');
-  const [role, setRole] = useState('user');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [user, setUser] = useState<User | null>(null);
@@ -62,19 +59,7 @@ const Auth = () => {
 
     try {
       const redirectUrl = `${window.location.origin}/`;
-      
-      // Generate project_id for designers, use existing for users
-      let projectId = '';
-      if (role === 'designer') {
-        projectId = generateProjectId();
-      } else {
-        projectId = existingProjectId;
-        if (!projectId) {
-          setError('Project ID is required for users');
-          setLoading(false);
-          return;
-        }
-      }
+      const projectId = generateProjectId();
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -82,7 +67,7 @@ const Auth = () => {
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            role: role,
+            role: 'designer',
             project_id: projectId
           }
         }
@@ -91,11 +76,7 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
-        if (role === 'designer') {
-          setError(`🎉 Welcome! Your project ID is: ${projectId}. Please save this! Check your email for a confirmation link.`);
-        } else {
-          setError('✅ Please check your email for a confirmation link.');
-        }
+        setError(`🎉 Welcome! Your project ID is: ${projectId}. Please save this! Check your email for a confirmation link.`);
       }
     } catch (error: any) {
       console.error('Sign up error:', error);
@@ -145,12 +126,12 @@ const Auth = () => {
             <Sparkles className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {isLogin ? 'Welcome back' : 'Get started'}
+            {isLogin ? 'Welcome back' : 'Create your Designer account'}
           </h1>
           <p className="text-gray-600">
             {isLogin 
-              ? 'Sign in to your account to continue' 
-              : 'Create your account and start collaborating'
+              ? 'Sign in to your designer account' 
+              : 'Start creating projects and managing client feedback'
             }
           </p>
         </div>
@@ -186,74 +167,21 @@ const Auth = () => {
               </div>
 
               {!isLogin && (
-                <>
-                  <div className="space-y-4">
-                    <Label className="text-sm font-medium text-gray-700">I am a</Label>
-                    <RadioGroup value={role} onValueChange={setRole} className="space-y-3">
-                      <div className="flex items-center space-x-3 p-4 rounded-xl border-2 border-gray-100 hover:border-violet-200 transition-colors">
-                        <RadioGroupItem value="user" id="user" className="text-violet-600" />
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-blue-100 rounded-lg">
-                            <Users className="w-4 h-4 text-blue-600" />
-                          </div>
-                          <div>
-                            <Label htmlFor="user" className="font-medium text-gray-900">Client</Label>
-                            <p className="text-sm text-gray-500">Join an existing project</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-3 p-4 rounded-xl border-2 border-gray-100 hover:border-violet-200 transition-colors">
-                        <RadioGroupItem value="designer" id="designer" className="text-violet-600" />
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-violet-100 rounded-lg">
-                            <Globe className="w-4 h-4 text-violet-600" />
-                          </div>
-                          <div>
-                            <Label htmlFor="designer" className="font-medium text-gray-900">Designer</Label>
-                            <p className="text-sm text-gray-500">Create a new project</p>
-                          </div>
-                        </div>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  {role !== 'designer' && (
-                    <div className="space-y-2">
-                      <Label htmlFor="existingProjectId" className="text-sm font-medium text-gray-700">Project ID</Label>
-                      <Input
-                        id="existingProjectId"
-                        type="text"
-                        value={existingProjectId}
-                        onChange={(e) => setExistingProjectId(e.target.value)}
-                        required
-                        placeholder="Enter the project ID from your designer"
-                        className="h-12 border-gray-200 focus:border-violet-500 focus:ring-violet-500"
-                      />
-                      <p className="text-xs text-gray-500 flex items-center space-x-1">
-                        <Globe className="w-3 h-3" />
-                        <span>Get this ID from your designer</span>
+                <div className="p-4 bg-gradient-to-r from-violet-50 to-indigo-50 rounded-xl border border-violet-100">
+                  <div className="flex items-start space-x-3">
+                    <div className="p-1 bg-violet-100 rounded-lg">
+                      <Sparkles className="w-4 h-4 text-violet-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-violet-900">
+                        Designer Account Benefits
+                      </p>
+                      <p className="text-xs text-violet-700 mt-1">
+                        Get a unique project ID to share with clients. Manage all feedback and requests in one place.
                       </p>
                     </div>
-                  )}
-
-                  {role === 'designer' && (
-                    <div className="p-4 bg-gradient-to-r from-violet-50 to-indigo-50 rounded-xl border border-violet-100">
-                      <div className="flex items-start space-x-3">
-                        <div className="p-1 bg-violet-100 rounded-lg">
-                          <Sparkles className="w-4 h-4 text-violet-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-violet-900">
-                            Creating a new project
-                          </p>
-                          <p className="text-xs text-violet-700 mt-1">
-                            A unique project ID will be generated for you. Share this ID with your clients so they can submit feedback.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
+                  </div>
+                </div>
               )}
 
               {error && (
@@ -277,7 +205,7 @@ const Auth = () => {
                     <span>Please wait...</span>
                   </div>
                 ) : (
-                  isLogin ? 'Sign In' : 'Create Account'
+                  isLogin ? 'Sign In' : 'Create Designer Account'
                 )}
               </Button>
             </form>
@@ -288,11 +216,10 @@ const Auth = () => {
                 onClick={() => {
                   setIsLogin(!isLogin);
                   setError('');
-                  setExistingProjectId('');
                 }}
                 className="text-sm text-violet-600 hover:text-violet-700 font-medium hover:underline transition-colors"
               >
-                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+                {isLogin ? "Don't have an account? Create designer account" : "Already have an account? Sign in"}
               </button>
             </div>
           </CardContent>
