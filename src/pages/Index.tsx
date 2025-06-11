@@ -1,13 +1,37 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Filter, Bell, CheckCircle } from "lucide-react";
+import { MessageSquare, Filter, Bell, CheckCircle, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { user, signOut } = useAuth();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-6 py-16">
+        {/* Navigation */}
+        <div className="flex justify-between items-center mb-8">
+          <div></div>
+          <div className="flex gap-4">
+            {user ? (
+              <>
+                <Link to="/designer-panel">
+                  <Button variant="outline">Designer Panel</Button>
+                </Link>
+                <Button variant="outline" onClick={signOut} className="flex items-center gap-2">
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <Link to="/auth">
+                <Button variant="outline">Sign In</Button>
+              </Link>
+            )}
+          </div>
+        </div>
+
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
             Client Request Manager
@@ -17,11 +41,19 @@ const Index = () => {
             in WordPress with Elementor. Streamline your workflow and keep clients happy.
           </p>
           
-          <Link to="/designer-panel">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg">
-              Open Designer Panel
-            </Button>
-          </Link>
+          {user ? (
+            <Link to="/designer-panel">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg">
+                Open Designer Panel
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/auth">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg">
+                Get Started
+              </Button>
+            </Link>
+          )}
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">

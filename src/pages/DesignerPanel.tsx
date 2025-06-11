@@ -1,339 +1,302 @@
-
-import React, { useState, useEffect } from 'react';
-import { Search, MessageSquare, Clock, CheckCircle, AlertCircle, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { editRequestsService, EditRequest } from '@/services/editRequestsService';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { editRequestsService, EditRequest } from '@/services/editRequestsService';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Search, Filter, MessageSquare, LogOut, User } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 const DesignerPanel = () => {
-  const [requests, setRequests] = useState<EditRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [pageFilter, setPageFilter] = useState<string>('all');
-  const [activeReply, setActiveReply] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState('');
-  const { toast } = useToast();
+  const { user, signOut } = useAuth();
+  const [filters, setFilters] = useState({
+    page_url: 'all',
+    status: 'all',
+    search: '',
+    project_id: ''
+  });
+  const [selectedRequest, setSelectedRequest] = useState<EditRequest | null>(null);
+  const [replyMessage, setReplyMessage] = useState('');
+  
+  const queryClient = useQueryClient();
 
-  // Load requests from Supabase
-  const loadRequests = async () => {
-    try {
-      setLoading(true);
-      const data = await editRequestsService.getEditRequests({
-        page_url: pageFilter !== 'all' ? pageFilter : undefined,
-        status: statusFilter !== 'all' ? statusFilter : undefined,
-        search: searchTerm || undefined
+  // Define queries and mutations
+  const { data: requests = [], isLoading } = useQuery({
+    queryKey: ['edit-requests', filters],
+    queryFn: () => editRequestsService.getEditRequests(filters),
+  });
+
+  const updateRequestMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: any }) =>
+      editRequestsService.updateEditRequest(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['edit-requests'] });
+      setSelectedRequest(null);
+    },
+  });
+
+  const addReplyMutation = useMutation({
+    mutationFn: ({ id, message, from }: { id: string; message: string; from: string }) =>
+      editRequestsService.addReply(id, message, from),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['edit-requests'] });
+      setReplyMessage('');
+    },
+  });
+
+  const handleStatusChange = (requestId: string, newStatus: string) => {
+    updateRequestMutation.mutate({
+      id: requestId,
+      updates: { status: newStatus as 'open' | 'in-progress' | 'resolved' }
+    });
+  };
+
+  const handleAddReply = () => {
+    if (selectedRequest && replyMessage.trim()) {
+      addReplyMutation.mutate({
+        id: selectedRequest.id,
+        message: replyMessage,
+        from: 'designer'
       });
-      setRequests(data);
-    } catch (error) {
-      console.error('Error loading requests:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load edit requests. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Load requests on component mount and when filters change
-  useEffect(() => {
-    loadRequests();
-  }, [statusFilter, pageFilter]);
-
-  // Handle search with debounce
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      loadRequests();
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  const filteredRequests = requests;
-  const pendingCount = requests.filter(r => r.status !== 'resolved').length;
-  const uniquePages = [...new Set(requests.map(r => r.page_url))];
-
-  const getStatusBadge = (status: string) => {
-    const colors = {
-      'open': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'in-progress': 'bg-blue-100 text-blue-800 border-blue-200',
-      'resolved': 'bg-green-100 text-green-800 border-green-200'
-    };
-    return colors[status as keyof typeof colors] || colors['open'];
-  };
-
-  const getStatusIcon = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return <AlertCircle className="w-3 h-3" />;
-      case 'in-progress': return <Clock className="w-3 h-3" />;
-      case 'resolved': return <CheckCircle className="w-3 h-3" />;
-      default: return <AlertCircle className="w-3 h-3" />;
+      case 'open': return 'bg-red-100 text-red-700';
+      case 'in-progress': return 'bg-yellow-100 text-yellow-700';
+      case 'resolved': return 'bg-green-100 text-green-700';
+      default: return 'bg-gray-100 text-gray-700';
     }
   };
 
-  const updateRequestStatus = async (id: string, newStatus: 'open' | 'in-progress' | 'resolved') => {
-    try {
-      await editRequestsService.updateEditRequest(id, { status: newStatus });
-      await loadRequests(); // Refresh the list
-      toast({
-        title: "Status Updated",
-        description: `Request status changed to ${newStatus.replace('-', ' ')}.`
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update status. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleReply = async (id: string) => {
-    if (replyText.trim()) {
-      try {
-        await editRequestsService.addReply(id, replyText.trim());
-        await loadRequests(); // Refresh the list
-        setActiveReply(null);
-        setReplyText('');
-        toast({
-          title: "Reply Sent",
-          description: "Your reply has been added to the request."
-        });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to send reply. Please try again.",
-          variant: "destructive"
-        });
-      }
-    }
-  };
-
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-    if (diffInHours < 24 * 7) return `${Math.floor(diffInHours / 24)} day${Math.floor(diffInHours / 24) > 1 ? 's' : ''} ago`;
-    return `${Math.floor(diffInHours / (24 * 7))} week${Math.floor(diffInHours / (24 * 7)) > 1 ? 's' : ''} ago`;
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading edit requests...</p>
-        </div>
+        <div className="text-lg">Loading requests...</div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-2">Client Edit Requests</h1>
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Designer Panel</h1>
+            <p className="text-gray-600">Manage client edit requests</p>
+          </div>
           <div className="flex items-center gap-4">
-            <Badge variant="outline" className="bg-white border-orange-200 text-orange-700 px-3 py-1">
-              {pendingCount} Pending Request{pendingCount !== 1 ? 's' : ''}
-            </Badge>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <User className="w-4 h-4" />
+              {user?.email}
+            </div>
+            <Link to="/">
+              <Button variant="outline" size="sm">
+                Home
+              </Button>
+            </Link>
+            <Button variant="outline" size="sm" onClick={signOut} className="flex items-center gap-2">
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
           </div>
         </div>
+      </div>
 
-        <div className="flex gap-8">
-          {/* Filter Sidebar */}
-          <div className="w-80 flex-shrink-0">
-            <Card className="bg-white shadow-sm border-0 shadow-gray-100">
-              <CardContent className="p-6">
-                <h3 className="font-medium text-gray-900 mb-4">Filters</h3>
-                
-                {/* Search */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      placeholder="Search requests..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
+      <div className="container mx-auto px-6 py-8">
+        {/* Filters */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="w-5 h-5" />
+              Filters & Search
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Search</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search requests..."
+                    value={filters.search}
+                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                    className="pl-10"
+                  />
                 </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Page URL</label>
+                <Select value={filters.page_url} onValueChange={(value) => setFilters({ ...filters, page_url: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Pages</SelectItem>
+                    {Array.from(new Set(requests.map(r => r.page_url))).map(url => (
+                      <SelectItem key={url} value={url}>{url}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                {/* Status Filter */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="in-progress">In Progress</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Status</label>
+                <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="open">Open</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="resolved">Resolved</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                {/* Page Filter */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Page</label>
-                  <Select value={pageFilter} onValueChange={setPageFilter}>
-                    <SelectTrigger className="border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                      <SelectItem value="all">All Pages</SelectItem>
-                      {uniquePages.map(page => (
-                        <SelectItem key={page} value={page}>{page}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Project ID</label>
+                <Input
+                  placeholder="Filter by project..."
+                  value={filters.project_id}
+                  onChange={(e) => setFilters({ ...filters, project_id: e.target.value })}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Requests List */}
+        <div className="grid gap-4">
+          {requests.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">No edit requests found</p>
               </CardContent>
             </Card>
-          </div>
-
-          {/* Request List */}
-          <div className="flex-1">
-            <div className="space-y-4">
-              {filteredRequests.map((request) => (
-                <Card key={request.id} className="bg-white shadow-sm border-0 shadow-gray-100 hover:shadow-md transition-shadow duration-200">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-gray-900">
-                            {request.section_id || 'General Request'}
-                          </h3>
-                          <Badge 
-                            variant="outline" 
-                            className={`flex items-center gap-1 ${getStatusBadge(request.status)}`}
-                          >
-                            {getStatusIcon(request.status)}
-                            {request.status.replace('-', ' ')}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-1">
-                          <span className="font-medium">Page:</span> {request.page_url}
-                        </p>
-                        <p className="text-sm text-gray-500">{formatTimestamp(request.created_at)}</p>
-                        {request.submitted_by && (
-                          <p className="text-sm text-gray-500">
-                            <span className="font-medium">From:</span> {request.submitted_by}
-                          </p>
-                        )}
-                      </div>
+          ) : (
+            requests.map((request) => (
+              <Card key={request.id} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{request.page_url}</CardTitle>
+                      {request.section_id && (
+                        <CardDescription>Section: {request.section_id}</CardDescription>
+                      )}
+                      <CardDescription className="mt-2">
+                        Project: {request.project_id || 'No project specified'}
+                      </CardDescription>
                     </div>
-
-                    <div className="mb-4">
-                      <p className="text-gray-800 leading-relaxed">{request.message}</p>
-                    </div>
-
-                    {/* Replies */}
-                    {request.replies && request.replies.length > 0 && (
-                      <div className="mb-4 border-l-2 border-gray-200 pl-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Replies:</p>
-                        <div className="space-y-2">
-                          {request.replies.map((reply) => (
-                            <div key={reply.id} className="bg-gray-50 p-3 rounded-lg">
-                              <p className="text-sm text-gray-800">{reply.message}</p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {reply.from} • {formatTimestamp(reply.timestamp)}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <Select
-                        value={request.status}
-                        onValueChange={(value) => updateRequestStatus(request.id, value as any)}
-                      >
-                        <SelectTrigger className="w-40 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                    <div className="flex items-center gap-2">
+                      <Badge className={getStatusColor(request.status)}>
+                        {request.status}
+                      </Badge>
+                      <Select value={request.status} onValueChange={(value) => handleStatusChange(request.id, value)}>
+                        <SelectTrigger className="w-32">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                        <SelectContent>
                           <SelectItem value="open">Open</SelectItem>
                           <SelectItem value="in-progress">In Progress</SelectItem>
                           <SelectItem value="resolved">Resolved</SelectItem>
                         </SelectContent>
                       </Select>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setActiveReply(activeReply === request.id ? null : request.id)}
-                        className="border-gray-200 hover:bg-gray-50"
-                      >
-                        <MessageSquare className="w-4 h-4 mr-2" />
-                        Reply
-                      </Button>
                     </div>
-
-                    {/* Inline Reply */}
-                    {activeReply === request.id && (
-                      <div className="border-t pt-4 animate-fade-in">
-                        <Textarea
-                          placeholder="Type your reply..."
-                          value={replyText}
-                          onChange={(e) => setReplyText(e.target.value)}
-                          className="mb-3 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                          rows={3}
-                        />
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            onClick={() => handleReply(request.id)}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            Send Reply
-                          </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-700 mb-4">{request.message}</p>
+                  
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <div>
+                      Created: {new Date(request.created_at).toLocaleDateString()}
+                      {request.submitted_by && ` • By: ${request.submitted_by}`}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {request.replies.length > 0 && (
+                        <span>{request.replies.length} replies</span>
+                      )}
+                      <Dialog>
+                        <DialogTrigger asChild>
                           <Button 
                             variant="outline" 
-                            size="sm" 
-                            onClick={() => {
-                              setActiveReply(null);
-                              setReplyText('');
-                            }}
-                            className="border-gray-200 hover:bg-gray-50"
+                            size="sm"
+                            onClick={() => setSelectedRequest(request)}
                           >
-                            Cancel
+                            <MessageSquare className="w-4 h-4 mr-1" />
+                            Reply
                           </Button>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {filteredRequests.length === 0 && (
-              <div className="text-center py-12">
-                <div className="text-gray-400 mb-4">
-                  <MessageSquare className="w-12 h-12 mx-auto" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No requests found</h3>
-                <p className="text-gray-600">Try adjusting your filters or search terms.</p>
-              </div>
-            )}
-          </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>Edit Request Details</DialogTitle>
+                            <DialogDescription>
+                              {request.page_url} - {request.section_id}
+                            </DialogDescription>
+                          </DialogHeader>
+                          
+                          <div className="space-y-4">
+                            <div>
+                              <h4 className="font-semibold mb-2">Original Request</h4>
+                              <p className="text-gray-700 bg-gray-50 p-3 rounded">{request.message}</p>
+                            </div>
+                            
+                            {request.replies.length > 0 && (
+                              <div>
+                                <h4 className="font-semibold mb-2">Replies</h4>
+                                <div className="space-y-2 max-h-40 overflow-y-auto">
+                                  {request.replies.map((reply) => (
+                                    <div key={reply.id} className="bg-gray-50 p-3 rounded">
+                                      <div className="flex justify-between items-start mb-1">
+                                        <span className="font-medium text-sm">{reply.from}</span>
+                                        <span className="text-xs text-gray-500">
+                                          {new Date(reply.timestamp).toLocaleString()}
+                                        </span>
+                                      </div>
+                                      <p className="text-sm">{reply.message}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            <div>
+                              <label className="block text-sm font-medium mb-2">Add Reply</label>
+                              <Textarea
+                                value={replyMessage}
+                                onChange={(e) => setReplyMessage(e.target.value)}
+                                placeholder="Type your reply..."
+                                rows={3}
+                              />
+                              <Button 
+                                onClick={handleAddReply}
+                                className="mt-2"
+                                disabled={!replyMessage.trim() || addReplyMutation.isPending}
+                              >
+                                {addReplyMutation.isPending ? 'Sending...' : 'Send Reply'}
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       </div>
     </div>
