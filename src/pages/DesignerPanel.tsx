@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,8 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MessageSquare, Filter, Search, User, LogOut, Globe, Settings, Bell, Eye, MessageCircle, CheckCircle, Clock, AlertCircle, Plus, Mail } from 'lucide-react';
+import { MessageSquare, Filter, Search, User, LogOut, Globe, Settings, Bell, Eye, MessageCircle, CheckCircle, Clock, AlertCircle, Plus } from 'lucide-react';
 import { editRequestsService, EditRequest } from '@/services/editRequestsService';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -116,39 +116,6 @@ const DesignerPanel = () => {
     setIsRequestDialogOpen(true);
   };
 
-  const getClientInitials = (submittedBy: string) => {
-    if (!submittedBy) return 'AN';
-    
-    // If it's an email, get initials from the part before @
-    if (submittedBy.includes('@')) {
-      const namePart = submittedBy.split('@')[0];
-      const words = namePart.split(/[._-]/).filter(word => word.length > 0);
-      return words.length >= 2 
-        ? `${words[0][0]}${words[1][0]}`.toUpperCase()
-        : `${words[0][0]}${words[0][1] || ''}`.toUpperCase();
-    }
-    
-    // If it's a name, get first letters of first two words
-    const words = submittedBy.split(' ').filter(word => word.length > 0);
-    return words.length >= 2 
-      ? `${words[0][0]}${words[1][0]}`.toUpperCase()
-      : `${words[0][0]}${words[0][1] || ''}`.toUpperCase();
-  };
-
-  const getDisplayName = (submittedBy: string) => {
-    if (!submittedBy) return 'Anonymous';
-    
-    // If it's an email, show the name part nicely formatted
-    if (submittedBy.includes('@')) {
-      const namePart = submittedBy.split('@')[0];
-      return namePart.split(/[._-]/).map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ');
-    }
-    
-    return submittedBy;
-  };
-
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -166,41 +133,41 @@ const DesignerPanel = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/40">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-100/50 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <Settings className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-gray-50">
+      {/* Clean Header */}
+      <div className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 lg:px-6">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                <Settings className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Designer Panel</h1>
-                <p className="text-sm text-gray-500 font-medium">Manage client feedback</p>
+                <h1 className="text-xl font-semibold text-gray-900">Designer Panel</h1>
+                <p className="text-sm text-gray-500">Manage client feedback</p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="rounded-2xl border-gray-200 hover:border-blue-300 transition-all duration-200">
+                  <Button variant="outline" size="sm" className="rounded-lg">
                     <Globe className="w-4 h-4 mr-2" />
                     Project ID
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-6 rounded-3xl shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
-                  <div className="space-y-4">
-                    <h4 className="font-semibold text-gray-900">Your Project ID</h4>
+                <PopoverContent className="w-72 p-4 rounded-xl shadow-lg border-0">
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-gray-900">Your Project ID</h4>
                     <p className="text-sm text-gray-600">Share this with clients to receive feedback</p>
-                    <div className="bg-gray-50 p-4 rounded-2xl">
+                    <div className="bg-gray-50 p-3 rounded-lg">
                       <code className="text-sm font-mono text-gray-800">{userProfile.project_id}</code>
                     </div>
                   </div>
                 </PopoverContent>
               </Popover>
               
-              <Button variant="outline" onClick={signOut} size="sm" className="rounded-2xl border-gray-200 hover:border-red-300 transition-all duration-200">
+              <Button variant="outline" onClick={signOut} size="sm" className="rounded-lg">
                 <LogOut className="w-4 h-4" />
               </Button>
             </div>
@@ -208,16 +175,16 @@ const DesignerPanel = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6">
         {/* Filters */}
-        <Card className="mb-8 rounded-3xl border-0 shadow-lg bg-white/60 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="mb-6 rounded-xl border-0 shadow-sm">
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="rounded-2xl border-gray-200 bg-white/50">
+                <SelectTrigger className="rounded-lg border-gray-200">
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
-                <SelectContent className="rounded-2xl">
+                <SelectContent className="rounded-lg">
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="open">Open</SelectItem>
                   <SelectItem value="in-progress">In Progress</SelectItem>
@@ -226,10 +193,10 @@ const DesignerPanel = () => {
               </Select>
 
               <Select value={pageFilter} onValueChange={setPageFilter}>
-                <SelectTrigger className="rounded-2xl border-gray-200 bg-white/50">
+                <SelectTrigger className="rounded-lg border-gray-200">
                   <SelectValue placeholder="All Pages" />
                 </SelectTrigger>
-                <SelectContent className="rounded-2xl">
+                <SelectContent className="rounded-lg">
                   <SelectItem value="all">All Pages</SelectItem>
                   {uniquePages.map(page => (
                     <SelectItem key={page} value={page}>{page}</SelectItem>
@@ -238,12 +205,12 @@ const DesignerPanel = () => {
               </Select>
 
               <div className="relative md:col-span-2">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="Search requests..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 rounded-2xl border-gray-200 bg-white/50"
+                  className="pl-10 rounded-lg border-gray-200"
                 />
               </div>
             </div>
@@ -252,47 +219,47 @@ const DesignerPanel = () => {
 
         {/* Request Cards */}
         {isLoading ? (
-          <div className="text-center py-16">
-            <div className="w-12 h-12 border-3 border-blue-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-6"></div>
-            <p className="text-gray-600 font-medium">Loading requests...</p>
+          <div className="text-center py-12">
+            <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading requests...</p>
           </div>
         ) : error ? (
-          <Card className="rounded-3xl border-0 shadow-lg bg-white/60">
-            <CardContent className="text-center py-16">
-              <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-6" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Error loading requests</h3>
+          <Card className="rounded-xl border-0 shadow-sm">
+            <CardContent className="text-center py-12">
+              <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading requests</h3>
               <p className="text-gray-600">{error.message}</p>
             </CardContent>
           </Card>
         ) : requests.length === 0 ? (
-          <Card className="rounded-3xl border-0 shadow-lg bg-white/60">
-            <CardContent className="text-center py-16">
-              <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-6" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">No requests found</h3>
+          <Card className="rounded-xl border-0 shadow-sm">
+            <CardContent className="text-center py-12">
+              <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No requests found</h3>
               <p className="text-gray-600">No edit requests match your current filters.</p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {requests.map((request: EditRequest) => (
               <Card 
                 key={request.id} 
-                className="rounded-3xl border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer bg-white/70 backdrop-blur-sm hover:bg-white/80 group"
+                className="rounded-2xl border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-white"
                 onClick={() => openRequestDialog(request)}
               >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate mb-3">
+                      <p className="text-sm font-medium text-gray-900 truncate mb-2">
                         {request.page_url}
                       </p>
-                      <div className="flex items-center space-x-3">
-                        <Badge className={`text-xs rounded-full px-3 py-1.5 font-medium ${getStatusColor(request.status)}`}>
+                      <div className="flex items-center space-x-2">
+                        <Badge className={`text-xs rounded-full px-2 py-1 ${getStatusColor(request.status)}`}>
                           {getStatusIcon(request.status)}
-                          <span className="ml-1.5 capitalize">{request.status.replace('-', ' ')}</span>
+                          <span className="ml-1 capitalize">{request.status.replace('-', ' ')}</span>
                         </Badge>
                         {request.replies && request.replies.length > 0 && (
-                          <Badge variant="outline" className="text-xs rounded-full px-3 py-1.5">
+                          <Badge variant="outline" className="text-xs rounded-full">
                             <MessageCircle className="w-3 h-3 mr-1" />
                             {request.replies.length}
                           </Badge>
@@ -301,37 +268,15 @@ const DesignerPanel = () => {
                     </div>
                   </div>
                   
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-4 leading-relaxed">
+                  <p className="text-sm text-gray-600 line-clamp-2 mb-3">
                     {request.message}
                   </p>
-
-                  {/* Client Information */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs font-semibold">
-                          {getClientInitials(request.submitted_by || '')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col">
-                        <span className="text-xs font-medium text-gray-900">
-                          {getDisplayName(request.submitted_by || '')}
-                        </span>
-                        {request.submitted_by && request.submitted_by.includes('@') && (
-                          <span className="text-xs text-gray-500 flex items-center">
-                            <Mail className="w-3 h-3 mr-1" />
-                            {request.submitted_by}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
                   
                   <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span className="font-medium">{new Date(request.created_at).toLocaleDateString()}</span>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <Eye className="w-4 h-4" />
-                    </div>
+                    <span>{new Date(request.created_at).toLocaleDateString()}</span>
+                    {request.submitted_by && (
+                      <span>by {request.submitted_by}</span>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -339,103 +284,73 @@ const DesignerPanel = () => {
           </div>
         )}
 
-        {/* Request Detail Dialog */}
+        {/* Clean Request Detail Dialog */}
         <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border-0 shadow-xl">
             {selectedRequest && (
               <>
-                <DialogHeader className="pb-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <DialogTitle className="text-xl font-bold text-gray-900 mb-2">
-                        {selectedRequest.page_url}
-                      </DialogTitle>
-                      
-                      {/* Enhanced Client Information in Dialog */}
-                      <div className="flex items-center space-x-4 mb-4">
-                        <Avatar className="w-12 h-12">
-                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold">
-                            {getClientInitials(selectedRequest.submitted_by || '')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-semibold text-gray-900">
-                            {getDisplayName(selectedRequest.submitted_by || '')}
-                          </span>
-                          {selectedRequest.submitted_by && selectedRequest.submitted_by.includes('@') && (
-                            <span className="text-sm text-gray-600 flex items-center">
-                              <Mail className="w-4 h-4 mr-1.5" />
-                              {selectedRequest.submitted_by}
-                            </span>
-                          )}
-                          <span className="text-xs text-gray-500 mt-1">
-                            Submitted on {new Date(selectedRequest.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-3">
-                        <Badge className={`rounded-full px-3 py-1.5 ${getStatusColor(selectedRequest.status)}`}>
-                          {getStatusIcon(selectedRequest.status)}
-                          <span className="ml-1.5 capitalize">{selectedRequest.status.replace('-', ' ')}</span>
-                        </Badge>
-                      </div>
-                    </div>
+                <DialogHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <DialogTitle className="text-lg font-semibold text-gray-900">
+                      {selectedRequest.page_url}
+                    </DialogTitle>
                     <Select
                       value={selectedRequest.status}
                       onValueChange={(value) => handleStatusChange(selectedRequest.id, value)}
                     >
-                      <SelectTrigger className="w-40 rounded-2xl border-gray-200">
+                      <SelectTrigger className="w-36 rounded-lg border-gray-200">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="rounded-2xl">
+                      <SelectContent className="rounded-lg">
                         <SelectItem value="open">Open</SelectItem>
                         <SelectItem value="in-progress">In Progress</SelectItem>
                         <SelectItem value="resolved">Resolved</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="flex items-center space-x-3 text-sm text-gray-600">
+                    <Badge className={`rounded-full px-2 py-1 ${getStatusColor(selectedRequest.status)}`}>
+                      {getStatusIcon(selectedRequest.status)}
+                      <span className="ml-1 capitalize">{selectedRequest.status.replace('-', ' ')}</span>
+                    </Badge>
+                    <span>{new Date(selectedRequest.created_at).toLocaleDateString()}</span>
+                    {selectedRequest.submitted_by && (
+                      <span>by {selectedRequest.submitted_by}</span>
+                    )}
+                  </div>
                 </DialogHeader>
 
                 <div className="space-y-6">
                   {/* Original Request */}
-                  <div className="bg-gradient-to-r from-gray-50 to-blue-50/30 p-6 rounded-2xl">
-                    <h4 className="font-semibold text-gray-900 mb-3">Original Request</h4>
-                    <p className="text-gray-700 leading-relaxed">{selectedRequest.message}</p>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <h4 className="font-medium text-gray-900 mb-2">Original Request</h4>
+                    <p className="text-gray-700 text-sm">{selectedRequest.message}</p>
                   </div>
 
                   {/* Conversation */}
                   {selectedRequest.replies && selectedRequest.replies.length > 0 && (
-                    <div className="space-y-4">
-                      <h4 className="font-semibold text-gray-900">Conversation</h4>
-                      <div className="space-y-4 max-h-64 overflow-y-auto">
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-gray-900">Conversation</h4>
+                      <div className="space-y-3 max-h-60 overflow-y-auto">
                         {selectedRequest.replies.map((reply) => (
                           <div
                             key={reply.id}
-                            className={`p-4 rounded-2xl ${
+                            className={`p-3 rounded-xl ${
                               reply.from === 'designer'
-                                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 ml-6'
-                                : 'bg-gradient-to-r from-gray-50 to-gray-100 border-l-4 border-gray-300 mr-6'
+                                ? 'bg-blue-50 border-l-4 border-blue-400 ml-4'
+                                : 'bg-gray-50 border-l-4 border-gray-300 mr-4'
                             }`}
                           >
-                            <div className="flex items-center space-x-3 mb-3">
-                              <Avatar className="w-6 h-6">
-                                <AvatarFallback className={`text-xs font-medium ${
-                                  reply.from === 'designer' 
-                                    ? 'bg-blue-500 text-white' 
-                                    : 'bg-gray-500 text-white'
-                                }`}>
-                                  {reply.from === 'designer' ? 'Y' : getClientInitials(selectedRequest.submitted_by || '')}
-                                </AvatarFallback>
-                              </Avatar>
+                            <div className="flex items-center space-x-2 mb-2">
+                              <User className="w-4 h-4" />
                               <span className="font-medium text-sm">
-                                {reply.from === 'designer' ? 'You' : getDisplayName(selectedRequest.submitted_by || '')}
+                                {reply.from === 'designer' ? 'You' : 'Client'}
                               </span>
                               <span className="text-xs text-gray-500">
                                 {new Date(reply.timestamp).toLocaleDateString()}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-700 leading-relaxed">{reply.message}</p>
+                            <p className="text-sm text-gray-700">{reply.message}</p>
                           </div>
                         ))}
                       </div>
@@ -443,9 +358,9 @@ const DesignerPanel = () => {
                   )}
 
                   {/* Add Reply */}
-                  <div className="border-t pt-6">
-                    <h4 className="font-semibold text-gray-900 mb-4">Add Reply</h4>
-                    <div className="space-y-4">
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium text-gray-900 mb-3">Add Reply</h4>
+                    <div className="space-y-3">
                       <Textarea
                         placeholder="Type your reply..."
                         value={replyTexts[selectedRequest.id] || ''}
@@ -453,14 +368,14 @@ const DesignerPanel = () => {
                           ...prev,
                           [selectedRequest.id]: e.target.value
                         }))}
-                        className="rounded-2xl border-gray-200 min-h-[100px] resize-none"
-                        rows={4}
+                        className="rounded-xl border-gray-200 min-h-[80px]"
+                        rows={3}
                       />
                       <div className="flex justify-end">
                         <Button
                           onClick={() => handleReplySubmit(selectedRequest.id)}
                           disabled={!replyTexts[selectedRequest.id]?.trim() || addReplyMutation.isPending}
-                          className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 rounded-2xl px-8 shadow-lg"
+                          className="bg-blue-500 hover:bg-blue-600 rounded-xl px-6"
                         >
                           <Plus className="w-4 h-4 mr-2" />
                           Send Reply
