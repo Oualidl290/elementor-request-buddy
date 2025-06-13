@@ -12,7 +12,7 @@ import { MessageSquare, Filter, Search, User, LogOut, Globe, Settings, Bell, Eye
 import { editRequestsService, EditRequest } from '@/services/editRequestsService';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { initializeWordPressContext, WordPressConfig } from '@/utils/wordpressIntegration';
+import { initializeWordPressContext, WordPressConfig, listenForPassportMessages } from '@/utils/wordpressIntegration';
 
 const DesignerPanel = () => {
   const { user, signOut } = useAuth();
@@ -23,12 +23,47 @@ const DesignerPanel = () => {
   const [selectedRequest, setSelectedRequest] = useState<EditRequest | null>(null);
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [wordpressConfig, setWordpressConfig] = useState<WordPressConfig | null>(null);
+  const [initializationStatus, setInitializationStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const queryClient = useQueryClient();
 
-  // Initialize WordPress context on component mount
+  // Initialize WordPress context and listen for messages
   useEffect(() => {
+    console.log('Designer Panel: Initializing WordPress integration');
+    
     const config = initializeWordPressContext();
-    setWordpressConfig(config);
+    if (config) {
+      setWordpressConfig(config);
+      setInitializationStatus('ready');
+      console.log('Designer Panel: WordPress integration ready');
+    } else {
+      console.log('Designer Panel: No WordPress config, will use user profile fallback');
+      setInitializationStatus('ready'); // Still allow fallback to user profile
+    }
+
+    // Listen for WordPress configuration changes
+    const handleConfigChange = (event: CustomEvent) => {
+      console.log('Designer Panel: WordPress config changed:', event.detail);
+      setWordpressConfig(event.detail);
+    };
+
+    // Listen for Passport messages
+    const cleanupPassport = listenForPassportMessages((message) => {
+      console.log('Designer Panel: Received Passport message:', message);
+      
+      if (message.type === 'lef-config-update' && message.projectId) {
+        setWordpressConfig({
+          projectId: message.projectId,
+          userRole: message.data?.role || 'designer'
+        });
+      }
+    });
+
+    window.addEventListener('lef-config-changed', handleConfigChange as EventListener);
+
+    return () => {
+      window.removeEventListener('lef-config-changed', handleConfigChange as EventListener);
+      cleanupPassport();
+    };
   }, []);
 
   // Get user's profile data including project_id
@@ -61,7 +96,7 @@ const DesignerPanel = () => {
       search: searchQuery || undefined,
       project_id: effectiveProjectId || '',
     }),
-    enabled: !!effectiveProjectId,
+    enabled: !!effectiveProjectId && initializationStatus === 'ready',
   });
 
   // Get unique page URLs for the filter dropdown (only for user's project)
@@ -126,11 +161,15 @@ const DesignerPanel = () => {
     setIsRequestDialogOpen(true);
   };
 
-  // Show loading while WordPress config is being initialized
-  if (!wordpressConfig && !userProfile) {
+  // Show loading while initialization is in progress
+  if (initializationStatus === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg font-medium text-gray-600">Initializing Designer Panel...</div>
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-lg font-medium text-gray-600">Initializing Designer Panel...</div>
+          <div className="text-sm text-gray-500 mt-2">Connecting to WordPress...</div>
+        </div>
       </div>
     );
   }
@@ -146,7 +185,13 @@ const DesignerPanel = () => {
   if (!effectiveProjectId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg font-medium text-gray-600">No project ID found. Please check your configuration.</div>
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-orange-400 mx-auto mb-4" />
+          <div className="text-lg font-medium text-gray-600">No project ID found</div>
+          <div className="text-sm text-gray-500 mt-2">
+            {wordpressConfig ? 'WordPress integration active but no project ID configured' : 'Please check your configuration or sign in again'}
+          </div>
+        </div>
       </div>
     );
   }
@@ -164,7 +209,7 @@ const DesignerPanel = () => {
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">Designer Panel</h1>
                 <p className="text-sm text-gray-500">
-                  {wordpressConfig ? 'WordPress Integration Active' : 'Manage client feedback'}
+                  {wordpressConfig ? `WordPress Integration Active (${wordpressConfig.userRole || 'designer'})` : 'Manage client feedback'}
                 </p>
               </div>
             </div>
@@ -181,11 +226,16 @@ const DesignerPanel = () => {
                   <div className="space-y-3">
                     <h4 className="font-medium text-gray-900">Current Project ID</h4>
                     <p className="text-sm text-gray-600">
-                      {wordpressConfig ? 'Loaded from WordPress container' : 'From user profile'}
+                      {wordpressConfig ? 'Loaded from WordPress container via Passport Portal' : 'From user profile'}
                     </p>
                     <div className="bg-gray-50 p-3 rounded-lg">
                       <code className="text-sm font-mono text-gray-800">{effectiveProjectId}</code>
                     </div>
+                    {wordpressConfig && (
+                      <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                        ✓ WordPress Bridge Active
+                      </div>
+                    )}
                   </div>
                 </PopoverContent>
               </Popover>
@@ -307,7 +357,6 @@ const DesignerPanel = () => {
           </div>
         )}
 
-        {/* Clean Request Detail Dialog */}
         <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border-0 shadow-xl">
             {selectedRequest && (
