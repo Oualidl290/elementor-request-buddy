@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +12,7 @@ import { MessageSquare, Filter, Search, User, LogOut, Globe, Settings, Bell, Eye
 import { editRequestsService, EditRequest } from '@/services/editRequestsService';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { initializeWordPressContext, WordPressConfig } from '@/utils/wordpressIntegration';
 
 const DesignerPanel = () => {
   const { user, signOut } = useAuth();
@@ -22,7 +22,14 @@ const DesignerPanel = () => {
   const [replyTexts, setReplyTexts] = useState<{ [key: string]: string }>({});
   const [selectedRequest, setSelectedRequest] = useState<EditRequest | null>(null);
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [wordpressConfig, setWordpressConfig] = useState<WordPressConfig | null>(null);
   const queryClient = useQueryClient();
+
+  // Initialize WordPress context on component mount
+  useEffect(() => {
+    const config = initializeWordPressContext();
+    setWordpressConfig(config);
+  }, []);
 
   // Get user's profile data including project_id
   const { data: userProfile } = useQuery({
@@ -42,16 +49,19 @@ const DesignerPanel = () => {
     enabled: !!user?.id,
   });
 
-  // Fetch edit requests filtered by user's project_id
+  // Use WordPress project ID if available, otherwise fall back to user profile
+  const effectiveProjectId = wordpressConfig?.projectId || userProfile?.project_id;
+
+  // Fetch edit requests filtered by effective project_id
   const { data: requests = [], isLoading, error } = useQuery({
-    queryKey: ['editRequests', statusFilter, pageFilter, searchQuery, userProfile?.project_id],
+    queryKey: ['editRequests', statusFilter, pageFilter, searchQuery, effectiveProjectId],
     queryFn: () => editRequestsService.getEditRequests({
       status: statusFilter === 'all' ? undefined : statusFilter,
       page_url: pageFilter === 'all' ? undefined : pageFilter,
       search: searchQuery || undefined,
-      project_id: userProfile?.project_id || '',
+      project_id: effectiveProjectId || '',
     }),
-    enabled: !!userProfile?.project_id,
+    enabled: !!effectiveProjectId,
   });
 
   // Get unique page URLs for the filter dropdown (only for user's project)
@@ -116,6 +126,15 @@ const DesignerPanel = () => {
     setIsRequestDialogOpen(true);
   };
 
+  // Show loading while WordPress config is being initialized
+  if (!wordpressConfig && !userProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-lg font-medium text-gray-600">Initializing Designer Panel...</div>
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -124,10 +143,10 @@ const DesignerPanel = () => {
     );
   }
 
-  if (!userProfile) {
+  if (!effectiveProjectId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg font-medium text-gray-600">Loading user profile...</div>
+        <div className="text-lg font-medium text-gray-600">No project ID found. Please check your configuration.</div>
       </div>
     );
   }
@@ -144,7 +163,9 @@ const DesignerPanel = () => {
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">Designer Panel</h1>
-                <p className="text-sm text-gray-500">Manage client feedback</p>
+                <p className="text-sm text-gray-500">
+                  {wordpressConfig ? 'WordPress Integration Active' : 'Manage client feedback'}
+                </p>
               </div>
             </div>
             
@@ -158,10 +179,12 @@ const DesignerPanel = () => {
                 </PopoverTrigger>
                 <PopoverContent className="w-72 p-4 rounded-xl shadow-lg border-0">
                   <div className="space-y-3">
-                    <h4 className="font-medium text-gray-900">Your Project ID</h4>
-                    <p className="text-sm text-gray-600">Share this with clients to receive feedback</p>
+                    <h4 className="font-medium text-gray-900">Current Project ID</h4>
+                    <p className="text-sm text-gray-600">
+                      {wordpressConfig ? 'Loaded from WordPress container' : 'From user profile'}
+                    </p>
                     <div className="bg-gray-50 p-3 rounded-lg">
-                      <code className="text-sm font-mono text-gray-800">{userProfile.project_id}</code>
+                      <code className="text-sm font-mono text-gray-800">{effectiveProjectId}</code>
                     </div>
                   </div>
                 </PopoverContent>
