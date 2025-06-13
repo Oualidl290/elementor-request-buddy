@@ -78,10 +78,10 @@ const DesignerPanel = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return 'bg-rose-50 text-rose-700 border-rose-200';
-      case 'in-progress': return 'bg-amber-50 text-amber-700 border-amber-200';
-      case 'resolved': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      default: return 'bg-slate-50 text-slate-700 border-slate-200';
+      case 'open': return 'bg-orange-50 text-orange-600 border-orange-200';
+      case 'in-progress': return 'bg-blue-50 text-blue-600 border-blue-200';
+      case 'resolved': return 'bg-green-50 text-green-600 border-green-200';
+      default: return 'bg-gray-50 text-gray-600 border-gray-200';
     }
   };
 
@@ -118,61 +118,56 @@ const DesignerPanel = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
-        <div className="text-lg font-medium text-slate-600">Please sign in to access the designer panel.</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-lg font-medium text-gray-600">Please sign in to access the designer panel.</div>
       </div>
     );
   }
 
   if (!userProfile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
-        <div className="text-lg font-medium text-slate-600">Loading user profile...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-lg font-medium text-gray-600">Loading user profile...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Modern Header */}
-      <div className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-slate-200/50 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <Settings className="w-5 h-5 text-white" />
+    <div className="min-h-screen bg-gray-50">
+      {/* Clean Header */}
+      <div className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 lg:px-6">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                <Settings className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-semibold text-slate-900">Designer Panel</h1>
-                <p className="text-sm text-slate-500 mt-1">Manage your client feedback</p>
+                <h1 className="text-xl font-semibold text-gray-900">Designer Panel</h1>
+                <p className="text-sm text-gray-500">Manage client feedback</p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="border-slate-200 hover:bg-slate-50">
+                  <Button variant="outline" size="sm" className="rounded-lg">
                     <Globe className="w-4 h-4 mr-2" />
                     Project ID
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-4">
+                <PopoverContent className="w-72 p-4 rounded-xl shadow-lg border-0">
                   <div className="space-y-3">
-                    <h4 className="font-medium text-slate-900">Your Project ID</h4>
-                    <p className="text-sm text-slate-600">Share this with clients to receive feedback</p>
-                    <div className="bg-slate-50 p-3 rounded-lg border">
-                      <code className="text-sm font-mono text-slate-800">{userProfile.project_id}</code>
+                    <h4 className="font-medium text-gray-900">Your Project ID</h4>
+                    <p className="text-sm text-gray-600">Share this with clients to receive feedback</p>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <code className="text-sm font-mono text-gray-800">{userProfile.project_id}</code>
                     </div>
                   </div>
                 </PopoverContent>
               </Popover>
               
-              <div className="flex items-center space-x-2 text-sm text-slate-600">
-                <User className="w-4 h-4" />
-                <span>{user.email}</span>
-              </div>
-              
-              <Button variant="outline" onClick={signOut} size="sm" className="border-slate-200 hover:bg-slate-50">
+              <Button variant="outline" onClick={signOut} size="sm" className="rounded-lg">
                 <LogOut className="w-4 h-4" />
               </Button>
             </div>
@@ -180,131 +175,104 @@ const DesignerPanel = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
-        {/* Modern Filters Card */}
-        <Card className="mb-8 border-0 shadow-sm bg-white/60 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-2">
-                <Filter className="w-5 h-5 text-slate-600" />
-                <h3 className="font-medium text-slate-900">Filters</h3>
-              </div>
-              <Badge variant="outline" className="text-xs">
-                {requests.length} {requests.length === 1 ? 'request' : 'requests'}
-              </Badge>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Status</label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="border-slate-200 focus:border-indigo-300 focus:ring-indigo-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="open">Open</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="resolved">Resolved</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+      <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6">
+        {/* Filters */}
+        <Card className="mb-6 rounded-xl border-0 shadow-sm">
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="rounded-lg border-gray-200">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent className="rounded-lg">
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
+                </SelectContent>
+              </Select>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Page</label>
-                <Select value={pageFilter} onValueChange={setPageFilter}>
-                  <SelectTrigger className="border-slate-200 focus:border-indigo-300 focus:ring-indigo-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Pages</SelectItem>
-                    {uniquePages.map(page => (
-                      <SelectItem key={page} value={page}>{page}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select value={pageFilter} onValueChange={setPageFilter}>
+                <SelectTrigger className="rounded-lg border-gray-200">
+                  <SelectValue placeholder="All Pages" />
+                </SelectTrigger>
+                <SelectContent className="rounded-lg">
+                  <SelectItem value="all">All Pages</SelectItem>
+                  {uniquePages.map(page => (
+                    <SelectItem key={page} value={page}>{page}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Search</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search requests..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 border-slate-200 focus:border-indigo-300 focus:ring-indigo-200"
-                  />
-                </div>
+              <div className="relative md:col-span-2">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Search requests..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 rounded-lg border-gray-200"
+                />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Requests Grid */}
+        {/* Request Cards */}
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="w-8 h-8 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-slate-600">Loading requests...</p>
+            <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading requests...</p>
           </div>
         ) : error ? (
-          <Card className="border-0 shadow-sm bg-white/60 backdrop-blur-sm">
+          <Card className="rounded-xl border-0 shadow-sm">
             <CardContent className="text-center py-12">
-              <AlertCircle className="w-12 h-12 text-rose-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-900 mb-2">Error loading requests</h3>
-              <p className="text-slate-600">{error.message}</p>
+              <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading requests</h3>
+              <p className="text-gray-600">{error.message}</p>
             </CardContent>
           </Card>
         ) : requests.length === 0 ? (
-          <Card className="border-0 shadow-sm bg-white/60 backdrop-blur-sm">
+          <Card className="rounded-xl border-0 shadow-sm">
             <CardContent className="text-center py-12">
-              <MessageSquare className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-900 mb-2">No requests found</h3>
-              <p className="text-slate-600">
-                {statusFilter === 'all' && pageFilter === 'all' && !searchQuery
-                  ? 'No edit requests have been submitted for your project yet.'
-                  : 'No requests match your current filters.'
-                }
-              </p>
+              <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No requests found</h3>
+              <p className="text-gray-600">No edit requests match your current filters.</p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {requests.map((request: EditRequest) => (
               <Card 
                 key={request.id} 
-                className="border-0 shadow-sm bg-white/60 backdrop-blur-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
+                className="rounded-2xl border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-white"
                 onClick={() => openRequestDialog(request)}
               >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-sm font-medium text-slate-900 mb-2 line-clamp-1">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate mb-2">
                         {request.page_url}
-                      </CardTitle>
+                      </p>
                       <div className="flex items-center space-x-2">
-                        <Badge className={`text-xs border ${getStatusColor(request.status)}`}>
+                        <Badge className={`text-xs rounded-full px-2 py-1 ${getStatusColor(request.status)}`}>
                           {getStatusIcon(request.status)}
-                          <span className="ml-1 capitalize">{request.status}</span>
+                          <span className="ml-1 capitalize">{request.status.replace('-', ' ')}</span>
                         </Badge>
                         {request.replies && request.replies.length > 0 && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs rounded-full">
                             <MessageCircle className="w-3 h-3 mr-1" />
                             {request.replies.length}
                           </Badge>
                         )}
                       </div>
                     </div>
-                    <Eye className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
-                </CardHeader>
-                
-                <CardContent className="pt-0">
-                  <p className="text-sm text-slate-600 line-clamp-3 mb-3">
+                  
+                  <p className="text-sm text-gray-600 line-clamp-2 mb-3">
                     {request.message}
                   </p>
                   
-                  <div className="flex items-center justify-between text-xs text-slate-500">
+                  <div className="flex items-center justify-between text-xs text-gray-500">
                     <span>{new Date(request.created_at).toLocaleDateString()}</span>
                     {request.submitted_by && (
                       <span>by {request.submitted_by}</span>
@@ -316,59 +284,61 @@ const DesignerPanel = () => {
           </div>
         )}
 
-        {/* Request Detail Dialog */}
+        {/* Clean Request Detail Dialog */}
         <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border-0 shadow-xl">
             {selectedRequest && (
               <>
-                <DialogHeader>
-                  <DialogTitle className="flex items-center justify-between">
-                    <span className="text-slate-900">{selectedRequest.page_url}</span>
+                <DialogHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <DialogTitle className="text-lg font-semibold text-gray-900">
+                      {selectedRequest.page_url}
+                    </DialogTitle>
                     <Select
                       value={selectedRequest.status}
                       onValueChange={(value) => handleStatusChange(selectedRequest.id, value)}
                     >
-                      <SelectTrigger className="w-40 border-slate-200">
+                      <SelectTrigger className="w-36 rounded-lg border-gray-200">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="rounded-lg">
                         <SelectItem value="open">Open</SelectItem>
                         <SelectItem value="in-progress">In Progress</SelectItem>
                         <SelectItem value="resolved">Resolved</SelectItem>
                       </SelectContent>
                     </Select>
-                  </DialogTitle>
-                  <DialogDescription className="flex items-center space-x-4 text-sm">
-                    <Badge className={`border ${getStatusColor(selectedRequest.status)}`}>
+                  </div>
+                  <div className="flex items-center space-x-3 text-sm text-gray-600">
+                    <Badge className={`rounded-full px-2 py-1 ${getStatusColor(selectedRequest.status)}`}>
                       {getStatusIcon(selectedRequest.status)}
-                      <span className="ml-1 capitalize">{selectedRequest.status}</span>
+                      <span className="ml-1 capitalize">{selectedRequest.status.replace('-', ' ')}</span>
                     </Badge>
-                    <span>{new Date(selectedRequest.created_at).toLocaleString()}</span>
+                    <span>{new Date(selectedRequest.created_at).toLocaleDateString()}</span>
                     {selectedRequest.submitted_by && (
                       <span>by {selectedRequest.submitted_by}</span>
                     )}
-                  </DialogDescription>
+                  </div>
                 </DialogHeader>
 
                 <div className="space-y-6">
                   {/* Original Request */}
-                  <div className="bg-slate-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-slate-900 mb-2">Original Request</h4>
-                    <p className="text-slate-700">{selectedRequest.message}</p>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <h4 className="font-medium text-gray-900 mb-2">Original Request</h4>
+                    <p className="text-gray-700 text-sm">{selectedRequest.message}</p>
                   </div>
 
-                  {/* Replies */}
+                  {/* Conversation */}
                   {selectedRequest.replies && selectedRequest.replies.length > 0 && (
                     <div className="space-y-3">
-                      <h4 className="font-medium text-slate-900">Conversation</h4>
+                      <h4 className="font-medium text-gray-900">Conversation</h4>
                       <div className="space-y-3 max-h-60 overflow-y-auto">
                         {selectedRequest.replies.map((reply) => (
                           <div
                             key={reply.id}
-                            className={`p-3 rounded-lg ${
+                            className={`p-3 rounded-xl ${
                               reply.from === 'designer'
-                                ? 'bg-indigo-50 border-l-4 border-indigo-400 ml-4'
-                                : 'bg-slate-50 border-l-4 border-slate-400 mr-4'
+                                ? 'bg-blue-50 border-l-4 border-blue-400 ml-4'
+                                : 'bg-gray-50 border-l-4 border-gray-300 mr-4'
                             }`}
                           >
                             <div className="flex items-center space-x-2 mb-2">
@@ -376,11 +346,11 @@ const DesignerPanel = () => {
                               <span className="font-medium text-sm">
                                 {reply.from === 'designer' ? 'You' : 'Client'}
                               </span>
-                              <span className="text-xs text-slate-500">
-                                {new Date(reply.timestamp).toLocaleString()}
+                              <span className="text-xs text-gray-500">
+                                {new Date(reply.timestamp).toLocaleDateString()}
                               </span>
                             </div>
-                            <p className="text-sm text-slate-700">{reply.message}</p>
+                            <p className="text-sm text-gray-700">{reply.message}</p>
                           </div>
                         ))}
                       </div>
@@ -389,7 +359,7 @@ const DesignerPanel = () => {
 
                   {/* Add Reply */}
                   <div className="border-t pt-4">
-                    <h4 className="font-medium text-slate-900 mb-3">Add Reply</h4>
+                    <h4 className="font-medium text-gray-900 mb-3">Add Reply</h4>
                     <div className="space-y-3">
                       <Textarea
                         placeholder="Type your reply..."
@@ -398,14 +368,14 @@ const DesignerPanel = () => {
                           ...prev,
                           [selectedRequest.id]: e.target.value
                         }))}
-                        className="border-slate-200 focus:border-indigo-300 focus:ring-indigo-200"
+                        className="rounded-xl border-gray-200 min-h-[80px]"
                         rows={3}
                       />
                       <div className="flex justify-end">
                         <Button
                           onClick={() => handleReplySubmit(selectedRequest.id)}
                           disabled={!replyTexts[selectedRequest.id]?.trim() || addReplyMutation.isPending}
-                          className="bg-indigo-600 hover:bg-indigo-700"
+                          className="bg-blue-500 hover:bg-blue-600 rounded-xl px-6"
                         >
                           <Plus className="w-4 h-4 mr-2" />
                           Send Reply
