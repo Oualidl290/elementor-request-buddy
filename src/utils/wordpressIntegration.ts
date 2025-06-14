@@ -6,7 +6,7 @@ export interface WordPressConfig {
 }
 
 export interface PassportMessage {
-  type: 'lef-passport-ready' | 'lef-role-selected' | 'lef-widget-ready';
+  type: 'lef-passport-ready' | 'lef-role-selected' | 'lef-widget-ready' | 'lef-config-update';
   widget?: 'client' | 'designer';
   role?: 'client' | 'designer';
   projectId?: string;
