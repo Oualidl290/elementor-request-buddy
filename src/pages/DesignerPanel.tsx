@@ -378,59 +378,59 @@ const DesignerPanel = () => {
         )}
 
         <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden rounded-3xl border-0 shadow-2xl bg-white/95 backdrop-blur-xl p-0">
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden rounded-2xl border-0 shadow-xl bg-white/95 backdrop-blur-xl p-0">
             {selectedRequest && (
               <div className="flex flex-col h-full">
-                {/* Header Section */}
-                <div className="px-8 py-6 border-b border-slate-100/80 bg-gradient-to-r from-slate-50/80 to-blue-50/80">
-                  <div className="flex items-start justify-between gap-6">
+                {/* Compact Header Section */}
+                <div className="px-6 py-4 border-b border-slate-100/80 bg-gradient-to-r from-slate-50/80 to-blue-50/80">
+                  <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-2xl font-bold text-slate-800 mb-2 truncate">
+                      <h2 className="text-lg font-bold text-slate-800 mb-1 truncate">
                         {selectedRequest.page_url}
                       </h2>
-                      <div className="flex items-center gap-4 text-sm text-slate-600">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="w-4 h-4" />
+                      <div className="flex items-center gap-3 text-xs text-slate-600">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
                           <span>{new Date(selectedRequest.created_at).toLocaleDateString()}</span>
                         </div>
                         {selectedRequest.submitted_by && (
-                          <div className="flex items-center gap-1.5">
-                            <User className="w-4 h-4" />
+                          <div className="flex items-center gap-1">
+                            <User className="w-3 h-3" />
                             <span className="font-medium">{selectedRequest.submitted_by}</span>
                           </div>
                         )}
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3">
-                      <Badge className={`rounded-full px-4 py-2 ${getStatusColor(selectedRequest.status)}`}>
+                    <div className="flex items-center gap-2">
+                      <Badge className={`rounded-full px-3 py-1 text-xs ${getStatusColor(selectedRequest.status)}`}>
                         {getStatusIcon(selectedRequest.status)}
-                        <span className="ml-2 capitalize font-medium">{selectedRequest.status.replace('-', ' ')}</span>
+                        <span className="ml-1 capitalize font-medium">{selectedRequest.status.replace('-', ' ')}</span>
                       </Badge>
                       
                       <Select
                         value={selectedRequest.status}
                         onValueChange={(value) => handleStatusChange(selectedRequest.id, value)}
                       >
-                        <SelectTrigger className="w-44 rounded-2xl border-slate-200/70 bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-300">
+                        <SelectTrigger className="w-36 h-8 rounded-xl border-slate-200/70 bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-300 text-xs">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="rounded-2xl border-0 shadow-xl bg-white/95 backdrop-blur-xl">
+                        <SelectContent className="rounded-xl border-0 shadow-xl bg-white/95 backdrop-blur-xl">
                           <SelectItem value="open">
-                            <div className="flex items-center gap-2">
-                              <AlertCircle className="w-4 h-4 text-orange-500" />
+                            <div className="flex items-center gap-2 text-xs">
+                              <AlertCircle className="w-3 h-3 text-orange-500" />
                               Open
                             </div>
                           </SelectItem>
                           <SelectItem value="in-progress">
-                            <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4 text-blue-500" />
+                            <div className="flex items-center gap-2 text-xs">
+                              <Clock className="w-3 h-3 text-blue-500" />
                               In Progress
                             </div>
                           </SelectItem>
                           <SelectItem value="resolved">
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="w-4 h-4 text-emerald-500" />
+                            <div className="flex items-center gap-2 text-xs">
+                              <CheckCircle className="w-3 h-3 text-emerald-500" />
                               Resolved
                             </div>
                           </SelectItem>
@@ -440,18 +440,18 @@ const DesignerPanel = () => {
                   </div>
                 </div>
 
-                {/* Content Section */}
-                <div className="flex-1 overflow-y-auto px-8 py-6">
-                  <div className="space-y-8">
+                {/* Compact Content Section */}
+                <div className="flex-1 overflow-y-auto px-6 py-4">
+                  <div className="space-y-4">
                     {/* Original Request */}
-                    <div className="bg-gradient-to-r from-slate-50/90 to-blue-50/90 rounded-3xl p-6 border border-slate-100/50">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center">
-                          <MessageSquare className="w-5 h-5 text-white" />
+                    <div className="bg-gradient-to-r from-slate-50/90 to-blue-50/90 rounded-xl p-4 border border-slate-100/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                          <MessageSquare className="w-3 h-3 text-white" />
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-800">Original Request</h3>
+                        <h3 className="text-sm font-semibold text-slate-800">Original Request</h3>
                       </div>
-                      <p className="text-slate-700 leading-relaxed text-base bg-white/60 rounded-2xl p-4">
+                      <p className="text-sm text-slate-700 leading-relaxed bg-white/60 rounded-lg p-3">
                         {selectedRequest.message}
                       </p>
                     </div>
@@ -459,30 +459,30 @@ const DesignerPanel = () => {
                     {/* Conversation */}
                     {selectedRequest.replies && selectedRequest.replies.length > 0 && (
                       <div>
-                        <div className="flex items-center gap-3 mb-6">
-                          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center">
-                            <MessageCircle className="w-5 h-5 text-white" />
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-6 h-6 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+                            <MessageCircle className="w-3 h-3 text-white" />
                           </div>
-                          <h3 className="text-lg font-semibold text-slate-800">Conversation</h3>
-                          <Badge variant="outline" className="rounded-full px-3 py-1 bg-emerald-50 border-emerald-200 text-emerald-700">
-                            {selectedRequest.replies.length} {selectedRequest.replies.length === 1 ? 'reply' : 'replies'}
+                          <h3 className="text-sm font-semibold text-slate-800">Conversation</h3>
+                          <Badge variant="outline" className="rounded-full px-2 py-0.5 bg-emerald-50 border-emerald-200 text-emerald-700 text-xs">
+                            {selectedRequest.replies.length}
                           </Badge>
                         </div>
                         
-                        <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
                           {selectedRequest.replies.map((reply) => (
                             <div
                               key={reply.id}
-                              className={`flex gap-4 ${reply.from === 'designer' ? 'justify-end' : 'justify-start'}`}
+                              className={`flex gap-3 ${reply.from === 'designer' ? 'justify-end' : 'justify-start'}`}
                             >
-                              <div className={`max-w-[75%] ${reply.from === 'designer' ? 'order-2' : 'order-1'}`}>
-                                <div className={`rounded-3xl px-6 py-4 ${
+                              <div className={`max-w-[80%] ${reply.from === 'designer' ? 'order-2' : 'order-1'}`}>
+                                <div className={`rounded-xl px-4 py-2 ${
                                   reply.from === 'designer'
                                     ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white'
                                     : 'bg-white border border-slate-200/70 text-slate-700'
                                 }`}>
-                                  <div className="flex items-center gap-2 mb-2 text-sm opacity-80">
-                                    <User className="w-3.5 h-3.5" />
+                                  <div className="flex items-center gap-1 mb-1 text-xs opacity-80">
+                                    <User className="w-2.5 h-2.5" />
                                     <span className="font-medium">
                                       {reply.from === 'designer' ? 'You' : 'Client'}
                                     </span>
@@ -490,16 +490,16 @@ const DesignerPanel = () => {
                                       {new Date(reply.timestamp).toLocaleDateString()}
                                     </span>
                                   </div>
-                                  <p className="text-sm leading-relaxed">{reply.message}</p>
+                                  <p className="text-xs leading-relaxed">{reply.message}</p>
                                 </div>
                               </div>
                               
-                              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+                              <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
                                 reply.from === 'designer' 
                                   ? 'bg-gradient-to-br from-blue-500 to-indigo-600 order-1' 
                                   : 'bg-gradient-to-br from-slate-100 to-slate-200 order-2'
                               }`}>
-                                <User className={`w-4 h-4 ${reply.from === 'designer' ? 'text-white' : 'text-slate-600'}`} />
+                                <User className={`w-3 h-3 ${reply.from === 'designer' ? 'text-white' : 'text-slate-600'}`} />
                               </div>
                             </div>
                           ))}
@@ -509,16 +509,16 @@ const DesignerPanel = () => {
                   </div>
                 </div>
 
-                {/* Reply Section */}
-                <div className="border-t border-slate-100/80 bg-gradient-to-r from-slate-50/50 to-blue-50/50 px-8 py-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
-                      <Plus className="w-4 h-4 text-white" />
+                {/* Compact Reply Section */}
+                <div className="border-t border-slate-100/80 bg-gradient-to-r from-slate-50/50 to-blue-50/50 px-6 py-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+                      <Plus className="w-3 h-3 text-white" />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-800">Add Reply</h3>
+                    <h3 className="text-sm font-semibold text-slate-800">Add Reply</h3>
                   </div>
                   
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <Textarea
                       placeholder="Type your reply here..."
                       value={replyTexts[selectedRequest.id] || ''}
@@ -526,17 +526,17 @@ const DesignerPanel = () => {
                         ...prev,
                         [selectedRequest.id]: e.target.value
                       }))}
-                      className="rounded-2xl border-slate-200/70 bg-white/80 backdrop-blur-sm focus:bg-white transition-all duration-300 min-h-[120px] text-base resize-none"
-                      rows={4}
+                      className="rounded-xl border-slate-200/70 bg-white/80 backdrop-blur-sm focus:bg-white transition-all duration-300 min-h-[80px] text-sm resize-none"
+                      rows={3}
                     />
                     
                     <div className="flex justify-end">
                       <Button
                         onClick={() => handleReplySubmit(selectedRequest.id)}
                         disabled={!replyTexts[selectedRequest.id]?.trim() || addReplyMutation.isPending}
-                        className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-2xl px-8 py-3 transition-all duration-300 shadow-lg hover:shadow-xl text-white font-medium"
+                        className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-xl px-6 py-2 transition-all duration-300 shadow-md hover:shadow-lg text-white font-medium text-sm h-9"
                       >
-                        <Send className="w-4 h-4 mr-2" />
+                        <Send className="w-3 h-3 mr-2" />
                         {addReplyMutation.isPending ? 'Sending...' : 'Send Reply'}
                       </Button>
                     </div>
