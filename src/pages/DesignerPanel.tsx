@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { MessageSquare, Filter, Search, User, LogOut, Globe, Settings, Bell, Eye, MessageCircle, CheckCircle, Clock, AlertCircle, Plus } from 'lucide-react';
+import { MessageSquare, Filter, Search, User, LogOut, Globe, Settings, Bell, Eye, MessageCircle, CheckCircle, Clock, AlertCircle, Plus, Sparkles, Palette, Zap } from 'lucide-react';
 import { editRequestsService, EditRequest } from '@/services/editRequestsService';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,7 +26,7 @@ const DesignerPanel = () => {
   const [initializationStatus, setInitializationStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const queryClient = useQueryClient();
 
-  // Initialize WordPress context and listen for messages
+  // useEffect for WordPress integration
   useEffect(() => {
     console.log('Designer Panel: Initializing WordPress integration');
     
@@ -66,7 +66,7 @@ const DesignerPanel = () => {
     };
   }, []);
 
-  // Get user's profile data including project_id
+  // userProfile query
   const { data: userProfile } = useQuery({
     queryKey: ['userProfile', user?.id],
     queryFn: async () => {
@@ -84,10 +84,9 @@ const DesignerPanel = () => {
     enabled: !!user?.id,
   });
 
-  // Use WordPress project ID if available, otherwise fall back to user profile
   const effectiveProjectId = wordpressConfig?.projectId || userProfile?.project_id;
 
-  // Fetch edit requests filtered by effective project_id
+  // requests query
   const { data: requests = [], isLoading, error } = useQuery({
     queryKey: ['editRequests', statusFilter, pageFilter, searchQuery, effectiveProjectId],
     queryFn: () => editRequestsService.getEditRequests({
@@ -99,10 +98,9 @@ const DesignerPanel = () => {
     enabled: !!effectiveProjectId && initializationStatus === 'ready',
   });
 
-  // Get unique page URLs for the filter dropdown (only for user's project)
   const uniquePages = [...new Set(requests.map(req => req.page_url))];
 
-  // Update request status
+  // mutations
   const updateRequestMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: any }) =>
       editRequestsService.updateEditRequest(id, updates),
@@ -111,7 +109,6 @@ const DesignerPanel = () => {
     },
   });
 
-  // Add reply to request
   const addReplyMutation = useMutation({
     mutationFn: ({ id, message }: { id: string; message: string }) =>
       editRequestsService.addReply(id, message, 'designer'),
@@ -123,22 +120,23 @@ const DesignerPanel = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return 'bg-orange-50 text-orange-600 border-orange-200';
-      case 'in-progress': return 'bg-blue-50 text-blue-600 border-blue-200';
-      case 'resolved': return 'bg-green-50 text-green-600 border-green-200';
-      default: return 'bg-gray-50 text-gray-600 border-gray-200';
+      case 'open': return 'bg-gradient-to-r from-orange-50 to-amber-50 text-orange-700 border-orange-200 shadow-sm';
+      case 'in-progress': return 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-200 shadow-sm';
+      case 'resolved': return 'bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-700 border-emerald-200 shadow-sm';
+      default: return 'bg-gradient-to-r from-gray-50 to-slate-50 text-gray-700 border-gray-200 shadow-sm';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'open': return <AlertCircle className="w-3 h-3" />;
-      case 'in-progress': return <Clock className="w-3 h-3" />;
-      case 'resolved': return <CheckCircle className="w-3 h-3" />;
-      default: return <MessageCircle className="w-3 h-3" />;
+      case 'open': return <AlertCircle className="w-3.5 h-3.5" />;
+      case 'in-progress': return <Clock className="w-3.5 h-3.5" />;
+      case 'resolved': return <CheckCircle className="w-3.5 h-3.5" />;
+      default: return <MessageCircle className="w-3.5 h-3.5" />;
     }
   };
 
+  // handler functions
   const handleStatusChange = (requestId: string, newStatus: string) => {
     updateRequestMutation.mutate({
       id: requestId,
@@ -161,14 +159,16 @@ const DesignerPanel = () => {
     setIsRequestDialogOpen(true);
   };
 
-  // Show loading while initialization is in progress
   if (initializationStatus === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-lg font-medium text-gray-600">Initializing Designer Panel...</div>
-          <div className="text-sm text-gray-500 mt-2">Connecting to WordPress...</div>
+          <div className="relative">
+            <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mx-auto mb-6"></div>
+            <Sparkles className="w-6 h-6 text-blue-500 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+          </div>
+          <div className="text-xl font-semibold text-slate-700 mb-2">Initializing Designer Panel</div>
+          <div className="text-sm text-slate-500">Connecting to WordPress...</div>
         </div>
       </div>
     );
@@ -176,39 +176,50 @@ const DesignerPanel = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg font-medium text-gray-600">Please sign in to access the designer panel.</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <Card className="rounded-3xl border-0 shadow-xl bg-white/80 backdrop-blur-sm p-8">
+          <CardContent className="text-center">
+            <User className="w-16 h-16 text-blue-400 mx-auto mb-6" />
+            <div className="text-xl font-semibold text-slate-700 mb-2">Authentication Required</div>
+            <div className="text-slate-500">Please sign in to access the designer panel.</div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (!effectiveProjectId) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-orange-400 mx-auto mb-4" />
-          <div className="text-lg font-medium text-gray-600">No project ID found</div>
-          <div className="text-sm text-gray-500 mt-2">
-            {wordpressConfig ? 'WordPress integration active but no project ID configured' : 'Please check your configuration or sign in again'}
-          </div>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <Card className="rounded-3xl border-0 shadow-xl bg-white/80 backdrop-blur-sm p-8">
+          <CardContent className="text-center">
+            <AlertCircle className="w-16 h-16 text-orange-400 mx-auto mb-6" />
+            <div className="text-xl font-semibold text-slate-700 mb-2">No Project Found</div>
+            <div className="text-sm text-slate-500 max-w-md">
+              {wordpressConfig ? 'WordPress integration active but no project ID configured' : 'Please check your configuration or sign in again'}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Clean Header */}
-      <div className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 lg:px-6">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Enhanced Header with Glassmorphism */}
+      <div className="bg-white/70 backdrop-blur-xl shadow-lg border-b border-white/20 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Palette className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">Designer Panel</h1>
-                <p className="text-sm text-gray-500">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                  Designer Studio
+                </h1>
+                <p className="text-sm text-slate-500 flex items-center gap-2">
+                  <Zap className="w-4 h-4" />
                   {wordpressConfig ? `WordPress Integration Active (${wordpressConfig.userRole || 'designer'})` : 'Manage client feedback'}
                 </p>
               </div>
@@ -217,30 +228,31 @@ const DesignerPanel = () => {
             <div className="flex items-center space-x-3">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="rounded-lg">
+                  <Button variant="outline" size="sm" className="rounded-2xl border-white/20 bg-white/50 backdrop-blur-sm hover:bg-white/80 transition-all duration-300">
                     <Globe className="w-4 h-4 mr-2" />
-                    Project ID
+                    Project
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-72 p-4 rounded-xl shadow-lg border-0">
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-gray-900">Current Project ID</h4>
-                    <p className="text-sm text-gray-600">
-                      {wordpressConfig ? 'Loaded from WordPress container via Passport Portal' : 'From user profile'}
+                <PopoverContent className="w-80 p-6 rounded-3xl shadow-2xl border-0 bg-white/95 backdrop-blur-xl">
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-slate-800 text-lg">Current Project</h4>
+                    <p className="text-sm text-slate-600">
+                      {wordpressConfig ? 'Loaded from WordPress via Passport Portal' : 'From user profile'}
                     </p>
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <code className="text-sm font-mono text-gray-800">{effectiveProjectId}</code>
+                    <div className="bg-gradient-to-r from-slate-50 to-blue-50 p-4 rounded-2xl border border-slate-100">
+                      <code className="text-sm font-mono text-slate-800 break-all">{effectiveProjectId}</code>
                     </div>
                     {wordpressConfig && (
-                      <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
-                        ✓ WordPress Bridge Active
+                      <div className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                        <CheckCircle className="w-4 h-4" />
+                        WordPress Bridge Active
                       </div>
                     )}
                   </div>
                 </PopoverContent>
               </Popover>
               
-              <Button variant="outline" onClick={signOut} size="sm" className="rounded-lg">
+              <Button variant="outline" onClick={signOut} size="sm" className="rounded-2xl border-white/20 bg-white/50 backdrop-blur-sm hover:bg-white/80 transition-all duration-300">
                 <LogOut className="w-4 h-4" />
               </Button>
             </div>
@@ -248,16 +260,16 @@ const DesignerPanel = () => {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6">
-        {/* Filters */}
-        <Card className="mb-6 rounded-xl border-0 shadow-sm">
-          <CardContent className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+        {/* Enhanced Filters */}
+        <Card className="mb-8 rounded-3xl border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="rounded-lg border-gray-200">
+                <SelectTrigger className="rounded-2xl border-slate-200/50 bg-white/70 backdrop-blur-sm hover:bg-white/90 transition-all duration-300">
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
-                <SelectContent className="rounded-lg">
+                <SelectContent className="rounded-2xl border-0 shadow-2xl bg-white/95 backdrop-blur-xl">
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="open">Open</SelectItem>
                   <SelectItem value="in-progress">In Progress</SelectItem>
@@ -266,10 +278,10 @@ const DesignerPanel = () => {
               </Select>
 
               <Select value={pageFilter} onValueChange={setPageFilter}>
-                <SelectTrigger className="rounded-lg border-gray-200">
+                <SelectTrigger className="rounded-2xl border-slate-200/50 bg-white/70 backdrop-blur-sm hover:bg-white/90 transition-all duration-300">
                   <SelectValue placeholder="All Pages" />
                 </SelectTrigger>
-                <SelectContent className="rounded-lg">
+                <SelectContent className="rounded-2xl border-0 shadow-2xl bg-white/95 backdrop-blur-xl">
                   <SelectItem value="all">All Pages</SelectItem>
                   {uniquePages.map(page => (
                     <SelectItem key={page} value={page}>{page}</SelectItem>
@@ -278,61 +290,64 @@ const DesignerPanel = () => {
               </Select>
 
               <div className="relative md:col-span-2">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
                 <Input
                   placeholder="Search requests..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 rounded-lg border-gray-200"
+                  className="pl-12 rounded-2xl border-slate-200/50 bg-white/70 backdrop-blur-sm hover:bg-white/90 focus:bg-white transition-all duration-300"
                 />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Request Cards */}
+        {/* Enhanced Request Cards */}
         {isLoading ? (
-          <div className="text-center py-12">
-            <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading requests...</p>
+          <div className="text-center py-16">
+            <div className="relative inline-block">
+              <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mb-6"></div>
+              <Sparkles className="w-6 h-6 text-blue-500 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+            </div>
+            <p className="text-slate-600 text-lg">Loading requests...</p>
           </div>
         ) : error ? (
-          <Card className="rounded-xl border-0 shadow-sm">
-            <CardContent className="text-center py-12">
-              <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading requests</h3>
-              <p className="text-gray-600">{error.message}</p>
+          <Card className="rounded-3xl border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+            <CardContent className="text-center py-16">
+              <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-6" />
+              <h3 className="text-xl font-semibold text-slate-800 mb-3">Error loading requests</h3>
+              <p className="text-slate-600">{error.message}</p>
             </CardContent>
           </Card>
         ) : requests.length === 0 ? (
-          <Card className="rounded-xl border-0 shadow-sm">
-            <CardContent className="text-center py-12">
-              <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No requests found</h3>
-              <p className="text-gray-600">No edit requests match your current filters.</p>
+          <Card className="rounded-3xl border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+            <CardContent className="text-center py-16">
+              <MessageSquare className="w-16 h-16 text-slate-400 mx-auto mb-6" />
+              <h3 className="text-xl font-semibold text-slate-800 mb-3">No requests found</h3>
+              <p className="text-slate-600">No edit requests match your current filters.</p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {requests.map((request: EditRequest) => (
               <Card 
                 key={request.id} 
-                className="rounded-2xl border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-white"
+                className="rounded-3xl border-0 shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer bg-white/80 backdrop-blur-sm hover:bg-white/95 hover:-translate-y-1 group"
                 onClick={() => openRequestDialog(request)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-3">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate mb-2">
+                      <p className="text-sm font-semibold text-slate-800 truncate mb-3 group-hover:text-blue-600 transition-colors duration-300">
                         {request.page_url}
                       </p>
-                      <div className="flex items-center space-x-2">
-                        <Badge className={`text-xs rounded-full px-2 py-1 ${getStatusColor(request.status)}`}>
+                      <div className="flex items-center space-x-3">
+                        <Badge className={`text-xs rounded-full px-3 py-1.5 ${getStatusColor(request.status)} transition-all duration-300`}>
                           {getStatusIcon(request.status)}
-                          <span className="ml-1 capitalize">{request.status.replace('-', ' ')}</span>
+                          <span className="ml-1.5 capitalize font-medium">{request.status.replace('-', ' ')}</span>
                         </Badge>
                         {request.replies && request.replies.length > 0 && (
-                          <Badge variant="outline" className="text-xs rounded-full">
+                          <Badge variant="outline" className="text-xs rounded-full px-2.5 py-1 border-slate-200 bg-slate-50/80">
                             <MessageCircle className="w-3 h-3 mr-1" />
                             {request.replies.length}
                           </Badge>
@@ -341,14 +356,17 @@ const DesignerPanel = () => {
                     </div>
                   </div>
                   
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                  <p className="text-sm text-slate-600 line-clamp-2 mb-4 leading-relaxed">
                     {request.message}
                   </p>
                   
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>{new Date(request.created_at).toLocaleDateString()}</span>
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span className="font-medium">{new Date(request.created_at).toLocaleDateString()}</span>
                     {request.submitted_by && (
-                      <span>by {request.submitted_by}</span>
+                      <span className="flex items-center gap-1">
+                        <User className="w-3 h-3" />
+                        {request.submitted_by}
+                      </span>
                     )}
                   </div>
                 </CardContent>
@@ -358,71 +376,87 @@ const DesignerPanel = () => {
         )}
 
         <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border-0 shadow-xl">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border-0 shadow-2xl bg-white/95 backdrop-blur-xl">
             {selectedRequest && (
               <>
-                <DialogHeader className="pb-4">
+                <DialogHeader className="pb-6">
                   <div className="flex items-center justify-between">
-                    <DialogTitle className="text-lg font-semibold text-gray-900">
+                    <DialogTitle className="text-xl font-bold text-slate-800">
                       {selectedRequest.page_url}
                     </DialogTitle>
                     <Select
                       value={selectedRequest.status}
                       onValueChange={(value) => handleStatusChange(selectedRequest.id, value)}
                     >
-                      <SelectTrigger className="w-36 rounded-lg border-gray-200">
+                      <SelectTrigger className="w-40 rounded-2xl border-slate-200">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="rounded-lg">
+                      <SelectContent className="rounded-2xl border-0 shadow-xl bg-white/95 backdrop-blur-xl">
                         <SelectItem value="open">Open</SelectItem>
                         <SelectItem value="in-progress">In Progress</SelectItem>
                         <SelectItem value="resolved">Resolved</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-center space-x-3 text-sm text-gray-600">
-                    <Badge className={`rounded-full px-2 py-1 ${getStatusColor(selectedRequest.status)}`}>
+                  <div className="flex items-center space-x-4 text-sm text-slate-600">
+                    <Badge className={`rounded-full px-3 py-1.5 ${getStatusColor(selectedRequest.status)}`}>
                       {getStatusIcon(selectedRequest.status)}
-                      <span className="ml-1 capitalize">{selectedRequest.status.replace('-', ' ')}</span>
+                      <span className="ml-1.5 capitalize font-medium">{selectedRequest.status.replace('-', ' ')}</span>
                     </Badge>
-                    <span>{new Date(selectedRequest.created_at).toLocaleDateString()}</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      {new Date(selectedRequest.created_at).toLocaleDateString()}
+                    </span>
                     {selectedRequest.submitted_by && (
-                      <span>by {selectedRequest.submitted_by}</span>
+                      <span className="flex items-center gap-1">
+                        <User className="w-4 h-4" />
+                        {selectedRequest.submitted_by}
+                      </span>
                     )}
                   </div>
                 </DialogHeader>
 
-                <div className="space-y-6">
+                <div className="space-y-8">
                   {/* Original Request */}
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <h4 className="font-medium text-gray-900 mb-2">Original Request</h4>
-                    <p className="text-gray-700 text-sm">{selectedRequest.message}</p>
+                  <div className="bg-gradient-to-r from-slate-50 to-blue-50 p-6 rounded-2xl border border-slate-100">
+                    <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5" />
+                      Original Request
+                    </h4>
+                    <p className="text-slate-700 leading-relaxed">{selectedRequest.message}</p>
                   </div>
 
                   {/* Conversation */}
                   {selectedRequest.replies && selectedRequest.replies.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-gray-900">Conversation</h4>
-                      <div className="space-y-3 max-h-60 overflow-y-auto">
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-slate-800 flex items-center gap-2">
+                        <MessageCircle className="w-5 h-5" />
+                        Conversation
+                      </h4>
+                      <div className="space-y-4 max-h-64 overflow-y-auto">
                         {selectedRequest.replies.map((reply) => (
                           <div
                             key={reply.id}
-                            className={`p-3 rounded-xl ${
+                            className={`p-4 rounded-2xl transition-all duration-300 ${
                               reply.from === 'designer'
-                                ? 'bg-blue-50 border-l-4 border-blue-400 ml-4'
-                                : 'bg-gray-50 border-l-4 border-gray-300 mr-4'
+                                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 ml-6'
+                                : 'bg-gradient-to-r from-gray-50 to-slate-50 border-l-4 border-slate-300 mr-6'
                             }`}
                           >
-                            <div className="flex items-center space-x-2 mb-2">
-                              <User className="w-4 h-4" />
-                              <span className="font-medium text-sm">
+                            <div className="flex items-center space-x-3 mb-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                reply.from === 'designer' ? 'bg-blue-100' : 'bg-slate-100'
+                              }`}>
+                                <User className="w-4 h-4" />
+                              </div>
+                              <span className="font-semibold text-sm">
                                 {reply.from === 'designer' ? 'You' : 'Client'}
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-slate-500">
                                 {new Date(reply.timestamp).toLocaleDateString()}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-700">{reply.message}</p>
+                            <p className="text-sm text-slate-700 leading-relaxed">{reply.message}</p>
                           </div>
                         ))}
                       </div>
@@ -430,9 +464,12 @@ const DesignerPanel = () => {
                   )}
 
                   {/* Add Reply */}
-                  <div className="border-t pt-4">
-                    <h4 className="font-medium text-gray-900 mb-3">Add Reply</h4>
-                    <div className="space-y-3">
+                  <div className="border-t border-slate-100 pt-6">
+                    <h4 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                      <Plus className="w-5 h-5" />
+                      Add Reply
+                    </h4>
+                    <div className="space-y-4">
                       <Textarea
                         placeholder="Type your reply..."
                         value={replyTexts[selectedRequest.id] || ''}
@@ -440,14 +477,14 @@ const DesignerPanel = () => {
                           ...prev,
                           [selectedRequest.id]: e.target.value
                         }))}
-                        className="rounded-xl border-gray-200 min-h-[80px]"
-                        rows={3}
+                        className="rounded-2xl border-slate-200 min-h-[100px] bg-white/80 backdrop-blur-sm focus:bg-white transition-all duration-300"
+                        rows={4}
                       />
                       <div className="flex justify-end">
                         <Button
                           onClick={() => handleReplySubmit(selectedRequest.id)}
                           disabled={!replyTexts[selectedRequest.id]?.trim() || addReplyMutation.isPending}
-                          className="bg-blue-500 hover:bg-blue-600 rounded-xl px-6"
+                          className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 rounded-2xl px-8 py-2.5 transition-all duration-300 shadow-lg hover:shadow-xl"
                         >
                           <Plus className="w-4 h-4 mr-2" />
                           Send Reply
