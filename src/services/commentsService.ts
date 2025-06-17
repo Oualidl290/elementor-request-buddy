@@ -23,7 +23,7 @@ export interface CreateCommentData {
 
 export const commentsService = {
   // Get all comments for a project
-  async getComments(projectId: string) {
+  async getComments(projectId: string): Promise<Comment[]> {
     const { data, error } = await supabase
       .from('comments')
       .select('*')
@@ -35,11 +35,11 @@ export const commentsService = {
       throw error;
     }
 
-    return data || [];
+    return (data || []) as Comment[];
   },
 
   // Create a new comment
-  async createComment(commentData: CreateCommentData) {
+  async createComment(commentData: CreateCommentData): Promise<Comment> {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -60,11 +60,11 @@ export const commentsService = {
       throw error;
     }
 
-    return data;
+    return data as Comment;
   },
 
   // Update comment status
-  async updateCommentStatus(id: string, status: 'open' | 'resolved') {
+  async updateCommentStatus(id: string, status: 'open' | 'resolved'): Promise<Comment> {
     const { data, error } = await supabase
       .from('comments')
       .update({ status })
@@ -77,11 +77,11 @@ export const commentsService = {
       throw error;
     }
 
-    return data;
+    return data as Comment;
   },
 
   // Delete a comment
-  async deleteComment(id: string) {
+  async deleteComment(id: string): Promise<void> {
     const { error } = await supabase
       .from('comments')
       .delete()
@@ -94,7 +94,7 @@ export const commentsService = {
   },
 
   // Get replies for a comment
-  async getReplies(parentId: string) {
+  async getReplies(parentId: string): Promise<Comment[]> {
     const { data, error } = await supabase
       .from('comments')
       .select('*')
@@ -106,6 +106,6 @@ export const commentsService = {
       throw error;
     }
 
-    return data || [];
+    return (data || []) as Comment[];
   }
 };
