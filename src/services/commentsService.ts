@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface Comment {
   id: string;
   project_id: string;
-  user_id: string;
+  user_name: string | null;
   x: number;
   y: number;
   comment: string;
@@ -18,6 +18,7 @@ export interface CreateCommentData {
   x: number;
   y: number;
   comment: string;
+  user_name?: string | null;
   parent_id?: string | null;
 }
 
@@ -40,18 +41,9 @@ export const commentsService = {
 
   // Create a new comment
   async createComment(commentData: CreateCommentData): Promise<Comment> {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('User must be authenticated to create comments');
-    }
-
     const { data, error } = await supabase
       .from('comments')
-      .insert([{
-        ...commentData,
-        user_id: user.id
-      }])
+      .insert([commentData])
       .select()
       .single();
 

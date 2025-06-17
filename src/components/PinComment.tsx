@@ -62,7 +62,14 @@ export const PinComment: React.FC<PinCommentProps> = ({
           <CardContent className="p-4">
             <div className="space-y-3">
               <div className="flex items-start justify-between">
-                <p className="text-sm text-gray-700">{comment.comment}</p>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-700 mb-2">{comment.comment}</p>
+                  {comment.user_name && (
+                    <p className="text-xs text-gray-500 font-medium">
+                      By: {comment.user_name}
+                    </p>
+                  )}
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"

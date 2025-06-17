@@ -9,13 +9,15 @@ interface CommentableAreaProps {
   comments: Comment[];
   onCommentsUpdate: () => void;
   children: React.ReactNode;
+  userName?: string; // Optional user name for comments
 }
 
 export const CommentableArea: React.FC<CommentableAreaProps> = ({
   projectId,
   comments,
   onCommentsUpdate,
-  children
+  children,
+  userName = 'Anonymous'
 }) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [newCommentPosition, setNewCommentPosition] = useState<{ x: number; y: number } | null>(null);
@@ -42,7 +44,8 @@ export const CommentableArea: React.FC<CommentableAreaProps> = ({
         project_id: projectId,
         x: newCommentPosition.x,
         y: newCommentPosition.y,
-        comment: commentText
+        comment: commentText,
+        user_name: userName
       });
 
       setIsAddingComment(false);
@@ -74,6 +77,7 @@ export const CommentableArea: React.FC<CommentableAreaProps> = ({
         x: parentComment.x,
         y: parentComment.y,
         comment: replyText,
+        user_name: userName,
         parent_id: parentId
       });
 

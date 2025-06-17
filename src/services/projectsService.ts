@@ -5,7 +5,7 @@ export interface Project {
   id: string;
   name: string;
   url: string;
-  client_id: string;
+  client_secret: string | null;
   designer_id: string;
   created_at: string;
 }
@@ -13,7 +13,7 @@ export interface Project {
 export interface CreateProjectData {
   name: string;
   url: string;
-  client_id: string;
+  client_secret?: string;
   designer_id: string;
 }
 

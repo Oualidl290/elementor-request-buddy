@@ -17,7 +17,7 @@ export type Database = {
           parent_id: string | null
           project_id: string
           status: string
-          user_id: string
+          user_name: string | null
           x: number
           y: number
         }
@@ -28,7 +28,7 @@ export type Database = {
           parent_id?: string | null
           project_id: string
           status?: string
-          user_id: string
+          user_name?: string | null
           x: number
           y: number
         }
@@ -39,7 +39,7 @@ export type Database = {
           parent_id?: string | null
           project_id?: string
           status?: string
-          user_id?: string
+          user_name?: string | null
           x?: number
           y?: number
         }
@@ -56,13 +56,6 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -132,7 +125,7 @@ export type Database = {
       }
       projects: {
         Row: {
-          client_id: string
+          client_secret: string | null
           created_at: string
           designer_id: string
           id: string
@@ -140,7 +133,7 @@ export type Database = {
           url: string
         }
         Insert: {
-          client_id: string
+          client_secret?: string | null
           created_at?: string
           designer_id: string
           id?: string
@@ -148,7 +141,7 @@ export type Database = {
           url: string
         }
         Update: {
-          client_id?: string
+          client_secret?: string | null
           created_at?: string
           designer_id?: string
           id?: string
@@ -156,13 +149,6 @@ export type Database = {
           url?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "projects_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "projects_designer_id_fkey"
             columns: ["designer_id"]
