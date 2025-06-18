@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       comments: {
         Row: {
+          author: string | null
           comment: string
           created_at: string
           id: string
@@ -22,6 +23,7 @@ export type Database = {
           y: number
         }
         Insert: {
+          author?: string | null
           comment: string
           created_at?: string
           id?: string
@@ -33,6 +35,7 @@ export type Database = {
           y: number
         }
         Update: {
+          author?: string | null
           comment?: string
           created_at?: string
           id?: string
@@ -127,25 +130,31 @@ export type Database = {
         Row: {
           client_secret: string | null
           created_at: string
+          created_by: string
           designer_id: string
           id: string
           name: string
+          slug: string | null
           url: string
         }
         Insert: {
           client_secret?: string | null
           created_at?: string
+          created_by?: string
           designer_id: string
           id?: string
           name: string
+          slug?: string | null
           url: string
         }
         Update: {
           client_secret?: string | null
           created_at?: string
+          created_by?: string
           designer_id?: string
           id?: string
           name?: string
+          slug?: string | null
           url?: string
         }
         Relationships: [
