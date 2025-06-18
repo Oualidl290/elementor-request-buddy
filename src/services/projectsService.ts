@@ -8,6 +8,8 @@ export interface Project {
   client_secret: string | null;
   designer_id: string;
   created_at: string;
+  created_by: string;
+  slug: string | null;
 }
 
 export interface CreateProjectData {
@@ -15,6 +17,8 @@ export interface CreateProjectData {
   url: string;
   client_secret?: string;
   designer_id: string;
+  created_by: string;
+  slug?: string;
 }
 
 export const projectsService = {
@@ -51,6 +55,8 @@ export const projectsService = {
 
   // Create a new project
   async createProject(projectData: CreateProjectData) {
+    console.log('Creating project with data:', projectData);
+    
     const { data, error } = await supabase
       .from('projects')
       .insert([projectData])
@@ -62,6 +68,7 @@ export const projectsService = {
       throw error;
     }
 
+    console.log('Project created successfully:', data);
     return data;
   },
 
