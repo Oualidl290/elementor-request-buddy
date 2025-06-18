@@ -22,7 +22,7 @@ export const useProjects = () => {
     }
   };
 
-  const createProject = async (projectData: Omit<Project, 'id' | 'created_at'>) => {
+  const createProject = async (projectData: Omit<Project, 'id' | 'created_at' | 'designer_id' | 'created_by'>) => {
     try {
       console.log('Creating new project:', projectData);
       const newProject = await projectsService.createProject(projectData);

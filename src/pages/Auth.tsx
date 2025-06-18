@@ -14,6 +14,8 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [projectName, setProjectName] = useState('');
+  const [projectUrl, setProjectUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [user, setUser] = useState<User | null>(null);
@@ -58,6 +60,19 @@ const Auth = () => {
     setLoading(true);
     setError('');
 
+    // Validation for signup
+    if (!projectName.trim()) {
+      setError('Project name is required for designer accounts');
+      setLoading(false);
+      return;
+    }
+
+    if (!projectUrl.trim()) {
+      setError('Project URL is required for designer accounts');
+      setLoading(false);
+      return;
+    }
+
     try {
       const redirectUrl = `${window.location.origin}/`;
       const projectId = generateProjectId();
@@ -69,7 +84,10 @@ const Auth = () => {
           emailRedirectTo: redirectUrl,
           data: {
             role: 'designer',
-            project_id: projectId
+            project_id: projectId,
+            project_name: projectName.trim(),
+            project_url: projectUrl.trim(),
+            name: email.split('@')[0] // Use email prefix as default name
           }
         }
       });
@@ -77,7 +95,7 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
-        setError(`🎉 Welcome! Your project ID is: ${projectId}. Please save this! Check your email for a confirmation link.`);
+        setError(`🎉 Welcome! Your project "${projectName}" has been created with ID: ${projectId}. Please save this! Check your email for a confirmation link.`);
       }
     } catch (error: any) {
       console.error('Sign up error:', error);
@@ -180,21 +198,49 @@ const Auth = () => {
               </div>
 
               {!isLogin && (
-                <div className="p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100">
-                  <div className="flex items-start space-x-4">
-                    <div className="p-2 bg-emerald-100 rounded-xl">
-                      <Shield className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-emerald-900 mb-1">
-                        Designer Account Benefits
-                      </p>
-                      <p className="text-xs text-emerald-700 leading-relaxed">
-                        Get a unique project ID to share with clients. Manage all feedback and requests in one centralized, beautiful dashboard.
-                      </p>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="projectName" className="text-sm font-semibold text-slate-700">Project Name</Label>
+                    <Input
+                      id="projectName"
+                      type="text"
+                      value={projectName}
+                      onChange={(e) => setProjectName(e.target.value)}
+                      required
+                      placeholder="e.g., My Awesome Website"
+                      className="h-12 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20 focus:ring-4 transition-all duration-200"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="projectUrl" className="text-sm font-semibold text-slate-700">Project URL</Label>
+                    <Input
+                      id="projectUrl"
+                      type="url"
+                      value={projectUrl}
+                      onChange={(e) => setProjectUrl(e.target.value)}
+                      required
+                      placeholder="https://yourwebsite.com"
+                      className="h-12 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20 focus:ring-4 transition-all duration-200"
+                    />
+                  </div>
+
+                  <div className="p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100">
+                    <div className="flex items-start space-x-4">
+                      <div className="p-2 bg-emerald-100 rounded-xl">
+                        <Shield className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-emerald-900 mb-1">
+                          Designer Account Setup
+                        </p>
+                        <p className="text-xs text-emerald-700 leading-relaxed">
+                          Your project will be automatically created with a unique ID. You can share this ID with clients to collect their feedback.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </>
               )}
 
               {error && (
@@ -220,7 +266,7 @@ const Auth = () => {
                 ) : (
                   <div className="flex items-center space-x-2">
                     {isLogin ? <Zap className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                    <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
+                    <span>{isLogin ? 'Sign In' : 'Create Designer Account'}</span>
                   </div>
                 )}
               </Button>

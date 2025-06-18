@@ -105,21 +105,27 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          email: string | null
           id: string
+          name: string | null
           project_id: string
           role: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          email?: string | null
           id: string
+          name?: string | null
           project_id: string
           role: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          email?: string | null
           id?: string
+          name?: string | null
           project_id?: string
           role?: string
           updated_at?: string
@@ -156,35 +162,6 @@ export type Database = {
           name?: string
           slug?: string | null
           url?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "projects_designer_id_fkey"
-            columns: ["designer_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      users: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          role: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          role: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          role?: string
         }
         Relationships: []
       }

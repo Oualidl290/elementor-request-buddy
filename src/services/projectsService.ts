@@ -22,11 +22,18 @@ export interface CreateProjectData {
 }
 
 export const projectsService = {
-  // Get all projects for the current user
+  // Get all projects for the current user (designer)
   async getProjects() {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
     const { data, error } = await supabase
       .from('projects')
       .select('*')
+      .eq('designer_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -37,12 +44,19 @@ export const projectsService = {
     return data || [];
   },
 
-  // Get a single project by ID
+  // Get a single project by ID (with designer verification)
   async getProject(id: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
     const { data, error } = await supabase
       .from('projects')
       .select('*')
       .eq('id', id)
+      .eq('designer_id', user.id)
       .single();
 
     if (error) {
@@ -53,13 +67,25 @@ export const projectsService = {
     return data;
   },
 
-  // Create a new project
-  async createProject(projectData: CreateProjectData) {
-    console.log('Creating project with data:', projectData);
+  // Create a new project (authenticated users only)
+  async createProject(projectData: Omit<CreateProjectData, 'designer_id' | 'created_by'>) {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const fullProjectData = {
+      ...projectData,
+      designer_id: user.id,
+      created_by: user.email || 'Unknown'
+    };
+
+    console.log('Creating project with data:', fullProjectData);
     
     const { data, error } = await supabase
       .from('projects')
-      .insert([projectData])
+      .insert([fullProjectData])
       .select()
       .single();
 
@@ -72,12 +98,19 @@ export const projectsService = {
     return data;
   },
 
-  // Update a project
-  async updateProject(id: string, updates: Partial<CreateProjectData>) {
+  // Update a project (only by owner)
+  async updateProject(id: string, updates: Partial<Omit<CreateProjectData, 'designer_id' | 'created_by'>>) {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
     const { data, error } = await supabase
       .from('projects')
       .update(updates)
       .eq('id', id)
+      .eq('designer_id', user.id)
       .select()
       .single();
 
@@ -89,12 +122,19 @@ export const projectsService = {
     return data;
   },
 
-  // Delete a project
+  // Delete a project (only by owner)
   async deleteProject(id: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
     const { error } = await supabase
       .from('projects')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('designer_id', user.id);
 
     if (error) {
       console.error('Error deleting project:', error);
